@@ -224,7 +224,10 @@ python mt_weighting.py \
 
 The order of h2, rg, n has to be in same order as files, which is alphabetical, if a path is provided
 rg order for 3 traits: 1-2, 1-3, 2-3
-n traits: ```R apply(combn(1:n, 2), 2, function(x) paste(x, collapse='-'))```
+for n traits:
+```R
+apply(combn(1:n, 2), 2, function(x) paste(x, collapse='-'))
+```
 
 This produces the same output as before:
 ```
