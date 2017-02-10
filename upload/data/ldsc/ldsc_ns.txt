@@ -1,0 +1,3 @@
+traitA	216772.0
+traitB	252781.0
+traitC	150064.0
