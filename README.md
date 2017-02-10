@@ -24,6 +24,7 @@ When combining multiple traits to create a more powerful predictor, it is possib
 
 By default it is assumed that single trait SNP effects are OLS estimates (GWAS profile scores). If instead of OLS estimates they are BLUP or SBLUP estimates, the ```--blup``` option can be used to calculate the appropriate weights. Even though the weights will be different under this option, the resulting weighted sum will be very similar, because of changes in the expected variance of the SNP effects or individual scores.
 
+The examples below can be recreted using the files in the data directory. However, since this data is based on traits with low rg, it will not necessarily increase prediction accuracy.
 
 ## Input formats
 
@@ -122,10 +123,13 @@ Multi-trait weighting can be applied to both OLS (GWAS) effects, as well as BLUP
 
 ```bash
 lambda=5000000
-for sumstats in `ls /path/to/sumstats/`; do
-      gcta --bfile /path/to/reference/panel --cojo-file /path/to/sumstats/${sumstats} --cojo-sblup ${lambda} --cojo-wind 2000 --thread-num 20 --out outfile.txt
+for sumstats in `ls snp_effects/OLS/`; do
+      gcta --bfile testset/test --cojo-file snp_effects/OLS/${sumstats} --cojo-sblup ${lambda} --cojo-wind 2000 --thread-num 20 --out snp_effects/SBLUP/`basename ${sumstats} .txt`
+      awk '{print $1, $2, $4}' snp_effects/SBLUP/`basename ${sumstats} .txt`.sblup.cojo > snp_effects/SBLUP/`basename ${sumstats}`
 done
 ```
+
+
 
 The shrinkage parameter lambda should be M * (1-h2)/h2, where M is the total number of (overlapping) markers and h2 is the SNP heritability of that trait.
 
@@ -200,10 +204,10 @@ python mt_weighting.py \
 Will result in these files:
 
 ```
-snp_effects/wMT-OLS/multi_trait.variances
-snp_effects/wMT-OLS/multi_trait.weights
-snp_effects/wMT-OLS/multi_trait.beta
-snp_effects/wMT-OLS/multi_trait.log
+multi_trait.variances
+multi_trait.weights
+multi_trait.beta
+multi_trait.log
 ```
 
 Equivalently, parameters can be specified on the command line rather than in files
