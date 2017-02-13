@@ -4,6 +4,7 @@ A program to combine SNP effects or individual scores from multiple-traits accor
 Table of Contents
 =================
 
+* [Installation](#installation)
 * [Simple Example](#simple-example)
 * [General process](#general-process)
 * [Input formats](#input-formats)
@@ -25,6 +26,15 @@ Table of Contents
     * [Weighting OLS SNP effects](#weighting-ols-snp-effects)
     * [Weighting SBLUP individual scores](#weighting-sblup-individual-scores)
     * [Weighting OLS individual score (profile scores) files](#weighting-ols-individual-score-profile-scores-files)
+
+
+Installation
+============
+
+Change into your directory of choice and type ```git clone https://github.com/uqrmaie1/mtweighting.git```, or click on the green download button to download the zip file. Change into the directory ```mtweighting```. With a bit of luck, the example in the next section should run without problems. If it doesn't, make sure ```python``` refers to version 2.7 and not 3.x, and that all the necessary libraries are installed.
+
+This has been tested under OS X 10.11.6 and under CentOS release 6.8.
+
 
 Simple example
 ==============
