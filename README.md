@@ -31,7 +31,7 @@ Table of Contents
 Installation
 ============
 
-Change into your directory of choice and type ```git clone https://github.com/uqrmaie1/mtweighting.git```, or click on the green download button to download the zip file. Change into the directory ```mtweighting```. With a bit of luck, the example in the next section should run without problems. If it doesn't, make sure ```python``` refers to version 2.7 and not 3.x, and that all the necessary libraries are installed.
+Change into your directory of choice and type ```git clone https://github.com/uqrmaie1/mtweighting.git```, or click on the green download button to download the zip file. This will take up around 78 MB. Change into the directory ```mtweighting```. With a bit of luck, the example in the next section should run without problems. If it doesn't, make sure ```python``` refers to version 2.7 and not 3.x, and that all the necessary libraries are installed.
 
 This has been tested under OS X 10.11.6 and under CentOS release 6.8.
 
@@ -198,16 +198,17 @@ Further examples
 ```
 python ldsc_wrapper.py \
     --out data/ldsc/ \
-    --files data/snp_effects/OLS/traitA.txt \
-            data/snp_effects/OLS/traitB.txt \
-            data/snp_effects/OLS/traitC.txt \
+    --files <( awk 'NR==1 {gsub("b", "beta")} {print}' data/snp_effects/OLS/traitA.txt )  \
+            <( awk 'NR==1 {gsub("b", "beta")} {print}' data/snp_effects/OLS/traitB.txt )  \
+            <( awk 'NR==1 {gsub("b", "beta")} {print}' data/snp_effects/OLS/traitC.txt )  \
     --ldscpath /path/to/ldsc/ \
     --snplist /path/to/w_hm3.snplist \
     --ref_ld /path/to/eur_w_ld_chr/ \
     --w_ld /path/to/eur_w_ld_chr/ \
 ```
+Note: GCTA and ldsc require slightly different notation in the header line.
 
-Will result in these files:
+This will result in these files:
 ```
 traitA.sumstats.gz
 traitB.sumstats.gz
