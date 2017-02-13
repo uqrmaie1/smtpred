@@ -195,18 +195,26 @@ Further examples
 
 ## Using ldsc wrapper to get h2 and rg
 
+GCTA and ldsc require slightly different notation in the header line:
+
+```
+mkdir data/snp_effects/OLS_ldsc/
+awk 'NR==1 {gsub("b", "beta")} {print}' data/snp_effects/OLS/traitA.txt > data/snp_effects/OLS_ldsc/traitA.txt
+awk 'NR==1 {gsub("b", "beta")} {print}' data/snp_effects/OLS/traitB.txt > data/snp_effects/OLS_ldsc/traitB.txt
+awk 'NR==1 {gsub("b", "beta")} {print}' data/snp_effects/OLS/traitC.txt > data/snp_effects/OLS_ldsc/traitC.txt
+```
+
 ```
 python ldsc_wrapper.py \
     --out data/ldsc/ \
-    --files <( awk 'NR==1 {gsub("b", "beta")} {print}' data/snp_effects/OLS/traitA.txt )  \
-            <( awk 'NR==1 {gsub("b", "beta")} {print}' data/snp_effects/OLS/traitB.txt )  \
-            <( awk 'NR==1 {gsub("b", "beta")} {print}' data/snp_effects/OLS/traitC.txt )  \
+    --files data/snp_effects/OLS_ldsc/traitA.txt \
+            data/snp_effects/OLS_ldsc/traitB.txt \
+            data/snp_effects/OLS_ldsc/traitC.txt \
     --ldscpath /path/to/ldsc/ \
     --snplist /path/to/w_hm3.snplist \
     --ref_ld /path/to/eur_w_ld_chr/ \
-    --w_ld /path/to/eur_w_ld_chr/ \
+    --w_ld /path/to/eur_w_ld_chr/
 ```
-Note: GCTA and ldsc require slightly different notation in the header line.
 
 This will result in these files:
 ```
