@@ -1,7 +1,33 @@
-# mt_weighting
-Program to combine SNP effects or individual scores from multiple-traits according to their sample size, h2 and rg
+# MTweighting
+A program to combine SNP effects or individual scores from multiple-traits according to their sample size, h2 and rg.
 
-## Simple example
+Table of Contents
+=================
+
+* [Simple Example](#simple-example)
+* [General process](#general-process)
+* [Input formats](#input-formats)
+    * [SNP effect files](#snp-effect-files)
+    * [Score files](#score-files)
+    * [Sample size file](#sample-size-file)
+    * [h2 file](#h2-file)
+    * [rg file](#rg-file)
+* [Output formats](#output-formats)
+    * [SNP effect file](#snp-effect-file)
+    * [Score file](#score-file)
+    * [Weights](#weights)
+    * [Variances](#variances)
+* [Additional options](#additional-options)
+* [Converting OLS effects to SBLUP effects](#converting-ols-effects-to-sblup-effects)
+* [Further examples](#further-examples)
+    * [Using ldsc wrapper to get h2 and rg](#using-ldsc-wrapper-to-get-h2-and-rg)
+    * [Using ldsc wrapper to extract h2 and rg](#using-ldsc-wrapper-to-extract-h2-and-rg)
+    * [Weighting OLS SNP effects](#weighting-ols-snp-effects)
+    * [Weighting SBLUP individual scores](#weighting-sblup-individual-scores)
+    * [Weighting OLS individual score (profile scores) files](#weighting-ols-individual-score-profile-scores-files)
+
+Simple example
+==============
 
 Let's say we want to combine traitA, traitB and traitC to create a more accurate predictor for traitA. It is assumed that single-trait predictors for traitA, traitB and traitC already exist, and that N, h2 and rg are known and are 1e5, 0.5 and 0.5, respectively.
 
@@ -18,7 +44,8 @@ python mt_weighting.py \
 
 This will create a file "multi_trait.score" with columns FID, IID and the multi-trait profile score.
 
-## General process
+General process
+===============
 
 When combining multiple traits to create a more powerful predictor, it is possible to either generate a weighted sum of SNP effects and use those for weighting, or to first create individual scores for each trait (using the ```PLINK --score``` function) and then create a weighted sum of those. If the set of SNPs for each trait is similar, the resulting predictor will also be very similar.
 
@@ -26,76 +53,81 @@ By default it is assumed that single trait SNP effects are OLS estimates (GWAS p
 
 The examples below can be recreted using the files in the data directory. However, since this data is based on traits with low rg, it will not necessarily increase prediction accuracy.
 
-## Input formats
+Input formats
+=============
 
-### Score files
-
-Weighting is performed on individual scores, if the option ```--scorefiles``` or ```--scorepath``` is specified. Score files have to be in the format of the output of ```PLINK --score``` (```.profile``` files) ```--scorepath``` assumes that all files in this directory are PLINK score files.
-
-### SNP effect files
+## SNP effect files
 
 Weighting is performed on SNP effects, if the option ```--betafiles``` or ```--betapath``` is specified. SNP effect files for each trait all have to be in the same format, and have to have a header line with three required fields: SNP ID (called "snp", "snpid", "rs", "rsid"; case insensitive), effect allele (called "a1"; case insensitive) and SNP effect (called "beta" or "b"; case insensitive). SNP IDs will be matched on their ID and effect allele "a1", and optionally on "a2" if it exists. "a1" (and "a2") have to match exactly among traits, otherwise the SNP will not be used.
 
-### Sample size file
+## Score files
+
+Weighting is performed on individual scores, if the option ```--scorefiles``` or ```--scorepath``` is specified. Score files have to be in the format of the output of ```PLINK --score``` (```.profile``` files) ```--scorepath``` assumes that all files in this directory are PLINK score files.
+
+
+## Sample size file
 
 File that contains sample size of each trait (option ```--nfile```). This file has no header and two columns: Trait and sample size. Alternatively sample size input can be provided directly using the option ```--n```.
 
-### h2 file
+## h2 file
 
 File that contains SNP heritability estimates of each trait (option ```--h2file```). This file has no header and two columns: Trait and SNP heritability. Alternatively SNP heritability input can be provided directly using the option ```--h2```.
 
-### rg file
+## rg file
 
 File that contains genetic correlation (rg) estimates of each trait (option ```--rgfile```). This file has no header and three columns: Trait 1, Trait 2 and SNP heritability. Alternatively genetic correlation input can be provided directly using the option ```--rg```.
 
 
-## Output formats
+Output formats
+==============
 
-### SNP effect file
+## SNP effect file
 
 If SNP effects have been provided as input, the file ```multi_trait.beta``` contains the multi-trait SNP effects. It has columns for SNP ID, effect allele and multi-trait beta for the trait of interest, which is assumed to be the first trait provided. If multi-trait SNP effects for all traits are of interest, the option ```--alltraits``` will result in one column for each trait in the input files. 
 
-### Score file
+## Score file
 
 If individual scores have been provided as input, the file ```multi_trait.score``` contains the multi-trait individual scores. It has columns for FID, IID and multi-trait scores for the trait of interest, which is assumed to be the first trait provided. If multi-trait individual scores for all traits are of interest, the option ```--alltraits``` will result in one column for each trait in the input files.
 
-### Weights
+## Weights
 
 ```multi_trait.weights``` will contain the weights that are used to combine traits. The header line of the file contains the traits that are used to create a multi-trait predictor. Each line contains the weights for creating a multi-trait predictor for one trait, with the first column containing the trait name and the other columns the weights for eaach trait. If ```--alltraits``` is specified, the file will have one line for each trait.
 
-### Variances
+## Variances
 
 ```multi_trait.variances``` will contain expected variances for each trait. This is necessary becasue the weights assume that the variances of the SNP effects are exactly identical to their expectations. Since that is not always the case, each trait is scaled to its expected variance before weighting. For OLS effects the expected variance for each trait is h2/mtot + 1/n. For BLUP effects the expected variance for each trait is R2/meff, where R2 = h2/(1+meff*(1-R2)/(n*h2)). Despite the differences in weights and expected variances between OLS and BLUP effects, the combined effect of both will mostly cancel out and the specification of the ```--blup``` option will not change the weighted output substantially.
 
-## Additional options
+Additional options
+==================
 
-### ```--alltraits```
+## ```--alltraits```
 
 This option specifies that multi-trait weighting should be performed for all traits, rather than just for the first trait.
 
 
-### ```--blup```
+## ```--blup```
 
 This option specifies that the input SNP effect or individual scores are estimated using BLUP, rather than OLS (GWAS estimates). This will affect both weights and expected variances, and have a small effect on the resulting multi-trait SNP effects and individual scores.
 
-### ```--skipidcheck```
+## ```--skipidcheck```
 
 This option skips the ID check, which ensures that IDs will be correctly matched across SNP effect or individual scores. It results in a speedup, but requires that all input files have the same IDs (and reference alleles, in case of SNP effects).
 
-### ```--mtot```
+## ```--mtot```
 
 This option specifies the total number of markers, which is needed for the calculation of expected variances and weights if the ```--blup``` option is not specified. If ```--mtot``` is not specified, it is set to 1e6 by default.
 
-### ```--meff```
+## ```--meff```
 
 This option specifies the effective number of markers, which is needed for the calculation of expected variances and weights if the ```--blup``` option is specified. If ```--meff``` is not specified, it is set to 90000 by default.
 
-### ```--out```
+## ```--out```
 
 This option specfies the location of the output files. If a path is given, the output files will have the prefix "multi_trait". If a path and file name prefix is given, that file name prefix will be used instead.
 
 
-## LDSC wrapper
+LDSC wrapper
+===============
 
 Multi trait weighting requires SNP heritability estimates for each trait and rg estimates for each pair of traits. If only summary statistics are available, LD score regression can be used to estimate these parameters. ```ldsc_wrapper.py``` is a wrapper around LD score regression, and in addition it extracts the parameters of interest from the LD score regression output files and saves them in the format used by ```mt_weighting.py```.
 
@@ -103,28 +135,34 @@ If LD score regression has already been run, the ```--extract``` option can be u
 
 ```ldsc_wrapper.py``` is a helper script to more conveniently obtain the input parameters for ```mt_weighting.py``` and has not been tested extensively.
 
-### Further ```ldsc_wrapper.py``` options
+## Further ```ldsc_wrapper.py``` options
 
-#### ```--ldscpath```
+### ```--ldscpath```
 
 Location of ```munge_sumstats.py``` and ```ldsc.py```.
 
-#### ```--snplist```, ```--ref_ld``` and ```--w_ld```
+### ```--snplist```, ```--ref_ld``` and ```--w_ld```
 
 These are input parameters for LD score regression. Please refer to the LD score regression documentation for more information.
 
-#### ```--usealln```
+### ```--usealln```
 
 By default, only the median of the first 100 lines is used to determine the sample size for each trait. This option will make sure the sample size is determined based on the median of all values.
 
-## Converting OLS effects to SBLUP effects
+Converting OLS effects to SBLUP effects
+=======================================
 
 Multi-trait weighting can be applied to both OLS (GWAS) effects, as well as BLUP effects, which often result in higher prediction accuracy. Typically BLUP effects require individual level genotype data, but ```GCTA --cojo-sblub``` allows to transform OLS effects into BLUP-like (SBLUP) effects, requiring only summary statistics and an LD reference panel:
 
 ```bash
 lambda=5000000
 for sumstats in `ls snp_effects/OLS/`; do
-      gcta --bfile testset/test --cojo-file snp_effects/OLS/${sumstats} --cojo-sblup ${lambda} --cojo-wind 2000 --thread-num 20 --out snp_effects/SBLUP/`basename ${sumstats} .txt`
+      gcta --bfile testset/test \
+           --cojo-file snp_effects/OLS/${sumstats} \
+           --cojo-sblup ${lambda} \
+           --cojo-wind 2000 \
+           --thread-num 20 \
+           --out snp_effects/SBLUP/`basename ${sumstats} .txt`
       awk '{print $1, $2, $4}' snp_effects/SBLUP/`basename ${sumstats} .txt`.sblup.cojo > snp_effects/SBLUP/`basename ${sumstats}`
 done
 ```
@@ -140,11 +178,11 @@ The reference panel genotype file should be in PLINK binary format. For more inf
 The analysis can be sped up by parallelizing over chromosomes.
 
 
-## Further examples
+Further examples
+================
 
 
-
-### Using ldsc wrapper to get h2 and rg
+## Using ldsc wrapper to get h2 and rg
 
 ```
 python ldsc_wrapper.py \
@@ -173,7 +211,9 @@ ldsc_rgs.txt
 ldsc_h2s.txt
 ```
 
-### If LDSC output files already exist, the following can be used to extract h2 and rg
+## Using ldsc wrapper to extract h2 and rg 
+
+If LDSC output files already exist, the following can be used to extract h2 and rg
 
 ```
 python ldsc_wrapper.py \
@@ -189,7 +229,7 @@ ldsc_h2s.txt
 ```
 
 
-### Weighting OLS SNP effects
+## Weighting OLS SNP effects
 
 ```
 python mt_weighting.py \
@@ -251,12 +291,12 @@ python mt_weighting.py \
 This results in these files:
 
 ```
-# weights_only.variances
-# weights_only.weights
-# weights_only.log
+weights_only.variances
+weights_only.weights
+weights_only.log
 ```
 
-### Weighting SBLUP individual scores
+## Weighting SBLUP individual scores
 
 ```
 python mt_weighting.py \
@@ -305,11 +345,13 @@ diag(cor(blupweights[,-1:-2], olsweights[,-1:-2]))
 Create individual scores using PLINK --score after multi-trait weighting:
 
 ```
-plink2 --bfile testset --score <( tail -n +2 snp_effects/wMT-OLS/multi_trait.beta ) --out individual_scores/wMT-OLS/traitA
+plink2 --bfile testset \
+       --score <( tail -n +2 snp_effects/wMT-OLS/multi_trait.beta )
+       --out individual_scores/wMT-OLS/traitA
 ```
 
 
-### Weighting OLS individual score (profile scores) files
+## Weighting OLS individual score (profile scores) files
 
 ```
 python mt_weighting.py \
