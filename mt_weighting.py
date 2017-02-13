@@ -64,6 +64,7 @@ def parse_arguments():
     group.add_argument('--rgfile', type=str, help='file with genetic correlation estimates for each pair of traits')
 
     parser.add_argument('--meff', default='90000', type=float, help='effective number of markers')
+    parser.add_argument('--mtot', default='1e6', type=float, help='total number of markers')
     parser.add_argument('--blup', action='store_true', help='flag to indicate that SNP effects (or individual scores) are BLUP effects, not GWAS (OLS) effects')
     parser.add_argument('--alltraits', action='store_true', help='flag to indicate if multi-trait effects should be returned for all traits (otherwise only first trait)')
     parser.add_argument('--skipidcheck', action='store_true', help='flag to indicate that IDs among input file should not be merged. Will increase speed if all input files have same IDs in same order.')
@@ -116,14 +117,15 @@ def check_h2_n_rg(h2s, ns, rgs):
 
 def read_h2(file, nam):
     """
-    reads h2file, returns list of h2 in order of nam; ignores everything after 2nd column (SE)
+    Args: file: file with h2 estimates. First column trait name, second column h2 estimate
+          nam: ordered trait names
+    Returns: list of h2 in order of nam
+    Ignores everything after 2nd column (SE)
     """
     h2dict = {}
     with open(file, 'r') as f:
         for l in f:
             h2dict[l.split()[0]] = float(l.split()[1])
-    if nam == None:
-        nam = set(h2dict.iterkeys())
 
     if set(h2dict.iterkeys()) != set(nam):
         raise ValueError("h2 file has to have one value for each trait and has to have matching trait names!")
@@ -134,14 +136,15 @@ def read_h2(file, nam):
 
 def read_n(file, nam):
     """
-    reads nfile, returns list of n in order of nam
+    Args: file: file with sample sizes. First column trait name, second column sample size
+          nam: ordered trait names
+    Returns: list of n in order of nam
+    Ignores everything after 2nd column
     """
     ndict = {}
     with open(file, 'r') as f:
         for l in f:
             ndict[l.split()[0]] = float(l.split()[1])
-    if nam == None:
-        nam = set(ndict.iterkeys())
     if set(ndict.iterkeys()) != set(nam):
         raise ValueError("N file has to have one value for each trait and has to have matching trait names!")
     n = []
@@ -153,7 +156,7 @@ def read_rg(file, nam):
     """
     Reads rg file. Ignores everything after 3rd column (SE). Fills in zero for missing pairs.
     Args: file: name of file containing trait1, trait2, rg in each trait
-          nam: trait names. if not None they will be matched to names in rgfile
+          nam: ordered trait names
     Returns: vector of genetic correlations in correct order
     """
     
@@ -161,9 +164,6 @@ def read_rg(file, nam):
     with open(file, 'r') as f:
         for l in f:
             rgdict[(l.split()[0], l.split()[1])] = float(l.split()[2])
-
-    if nam == None:
-        nam = set([x[0] for x in rgdict.iterkeys()] + [x[1] for x in rgdict.iterkeys()])
 
     for k in rgdict.keys():
         rgdict[(k[1], k[0])] = rgdict[k]
@@ -198,6 +198,7 @@ def get_names_from_nfile(file):
 def read_files(files, args):
     """
     Args: files: list of file names
+          args: command line arguments
     Returns: list of pandas DataFrames with SNP or score data
     """
 
@@ -466,7 +467,7 @@ def blup_weights(n, h2, rg, meff):
           h2: vector with SNP heritabilities
           rg: vector with rg for each pair of traits (3 traits: 1,2; 1,3; 2,3)
           meff: effective number of markers (doesn't change result much)
-    Returns: ntraits * ntraits array with ols weights. weights in each row are for are for a multi-trait predictor of the trait in this row
+    Returns: ntraits * ntraits array with blup weights. weights in each row are for are for a multi-trait predictor of the trait in this row
     """
 
     ntraits = len(n)
@@ -486,6 +487,7 @@ def blup_weights(n, h2, rg, meff):
         weights[i, nonzero] = numpy.dot(Vinv, C[i, nonzero])
    
     return weights
+
 
 def effective_weights(weights, expected_variances):
     """
@@ -572,16 +574,13 @@ def main():
     elif args.nfile != None:
         Values.basenames = get_names_from_nfile(args.nfile)
     else:
-        Values.basenames = None
+        Values.basenames = ['trait_' + str(i) for i in range(len(args.n))]
 
     
     # get parameters
     h2s = args.h2 or read_h2(args.h2file, Values.basenames)
     ns  = args.n  or read_n(args.nfile, Values.basenames)
     rgs = args.rg or read_rg(args.rgfile, Values.basenames)
-
-    if not Values.basenames:
-        Values.basenames = ['trait_' + str(i) for i in range(len(ns))]
     
     check_h2_n_rg(h2s, ns, rgs)
 
