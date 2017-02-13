@@ -68,7 +68,7 @@ Input formats
 
 ## SNP effect files
 
-Weighting is performed on SNP effects, if the option ```--betafiles``` or ```--betapath``` is specified. SNP effect files for each trait all have to be in the same format, and have to have a header line with three required fields: SNP ID (called "snp", "snpid", "rs", "rsid"; case insensitive), effect allele (called "a1"; case insensitive) and SNP effect (called "beta" or "b"; case insensitive). SNP IDs will be matched on their ID and effect allele "a1", and optionally on "a2" if it exists. "a1" (and "a2") have to match exactly among traits, otherwise the SNP will not be used.
+Weighting is performed on SNP effects, if the option ```--betafiles``` or ```--betapath``` is specified. SNP effect files for each trait all have to be in the same format, and have to have a header line with three required fields: SNP ID (called ```snp```, ```snpid```, ```rs```, ```rsid```; case insensitive), effect allele (called ```a1```; case insensitive) and SNP effect (called ```beta``` or ```b```; case insensitive). SNP IDs will be matched on their ID and effect allele ```a1```, and optionally on ```a2``` if it exists. ```a1``` (and ```a2```) have to match exactly among traits, otherwise the SNP will not be used.
 
 ## Score files
 
@@ -105,7 +105,7 @@ If individual scores have been provided as input, the file ```multi_trait.score`
 
 ## Variances
 
-```multi_trait.variances``` will contain expected variances for each trait. This is necessary becasue the weights assume that the variances of the SNP effects are exactly identical to their expectations. Since that is not always the case, each trait is scaled to its expected variance before weighting. For OLS effects the expected variance for each trait is h2/mtot + 1/n. For BLUP effects the expected variance for each trait is R2/meff, where R2 = h2/(1+meff*(1-R2)/(n*h2)). Despite the differences in weights and expected variances between OLS and BLUP effects, the combined effect of both will mostly cancel out and the specification of the ```--blup``` option will not change the weighted output substantially.
+```multi_trait.variances``` will contain expected variances for each trait. This is necessary becasue the weights assume that the variances of the SNP effects are exactly identical to their expectations. Since that is not always the case, each trait is scaled to its expected variance before weighting. For OLS effects the expected variance for each trait is h2/mtot + 1/n. For BLUP effects the expected variance for each trait is R2/meff, where R2 = h2/(1+meff\*(1-R2)/(n\*h2)). Despite the differences in weights and expected variances between OLS and BLUP effects, the combined effect of both will mostly cancel out and the specification of the ```--blup``` option will not change the weighted output substantially.
 
 Additional options
 ==================
@@ -117,7 +117,7 @@ This option specifies that multi-trait weighting should be performed for all tra
 
 ## ```--blup```
 
-This option specifies that the input SNP effect or individual scores are estimated using BLUP, rather than OLS (GWAS estimates). This will affect both weights and expected variances, and have a small effect on the resulting multi-trait SNP effects and individual scores.
+This option specifies that the input SNP effect or individual scores are estimated using BLUP, rather than OLS (GWAS estimates). This will affect both weights and expected variances, but has only a small effect on the resulting multi-trait SNP effects and individual scores.
 
 ## ```--skipidcheck```
 
@@ -182,7 +182,9 @@ done
 
 The shrinkage parameter lambda should be M * (1-h2)/h2, where M is the total number of (overlapping) markers and h2 is the SNP heritability of that trait.
 
-Summary statistics input files have to these columns: SNP, A1, A2, freq, b, se, p, N; and should include a header line. For more information see http://cnsgenomics.com/software/gcta/cojo.html.
+Converting OLS effects to SBLUP effects increases prediction accuracy because it results in conditional SNP effects rather than marginal SNP effects. It is therefore important that the set of SNPs is reduced to the set of SNPs used in the prediction set, before running this analysis.
+
+Summary statistics input files have to these columns: ```SNP```, ```A1```, ```A2```, ```freq```, ```b```, ```se```, ```p```, ```N```; and should include a header line. For more information see http://cnsgenomics.com/software/gcta/cojo.html.
 
 The reference panel genotype file should be in PLINK binary format. For more information see https://www.cog-genomics.org/plink2/formats#bed.
 
@@ -273,9 +275,9 @@ multi_trait.log
 Equivalently, parameters can be specified on the command line rather than in files
 
 ```bash
-h2s=`awk '{printf $2 " "}' ldsc/ldsc_h2s.txt`
-rgs=`awk '{printf $3 " "}' ldsc/ldsc_rgs.txt`
-ns=`awk '{printf $2 " "}' ldsc/ldsc_ns.txt`
+h2s=`awk '{printf $2 " "}' data/ldsc/ldsc_h2s.txt`
+rgs=`awk '{printf $3 " "}' data/ldsc/ldsc_rgs.txt`
+ns=`awk '{printf $2 " "}' data/ldsc/ldsc_ns.txt`
 
 python mt_weighting.py \
   --h2 $h2s \
@@ -359,7 +361,7 @@ blupweights = read.table('data/individual_scores/wMT-SBLUP/multi_trait.score', h
 olsweights = read.table('data/individual_scores/wMT-SBLUP/multi_trait_olsweighting.score', h=T)
 diag(cor(blupweights[,-1:-2], olsweights[,-1:-2]))
 #                     traitA                      traitB                    traitC
-#                  0.9976447                   0.9996590                 0.9998719
+#                  0.9976878                   0.9996627                 0.9998622
 ```
 
 Create individual scores using PLINK --score after multi-trait weighting:
@@ -381,7 +383,7 @@ python mt_weighting.py \
   --scorefiles data/individual_scores/OLS/traitA.profile \
                data/individual_scores/OLS/traitB.profile \
                data/individual_scores/OLS/traitC.profile \
-  --out data/sample_data/individual_scores/wMT-OLS/traitA
+  --out data/individual_scores/wMT-OLS/traitA
 ```
 
 This demonstrates that first creating individual score files for each trait and then combining individual scores leads to similar results as first combining SNP effects for all traits and then creating individual scores from SNP effects.
@@ -390,7 +392,7 @@ This demonstrates that first creating individual score files for each trait and 
 combine_score = read.table('data/individual_scores/wMT-OLS/traitA.score', h=T)
 combine_beta = read.table('data/individual_scores/wMT-OLS/traitA.profile', h=T)
 cor(combine_score[,3], combine_beta$SCORE)
-# [1] 0.9573187
+# [1] 0.9521655
 ```
 
 
