@@ -36,10 +36,10 @@ python mt_weighting.py \
   --h2 0.5 0.5 0.5 \
   --rg 0.5 0.5 0.5 \
   --n 1e5 1e5 1e5 \
-  --scorefiles individual_scores/OLS/traitA.profile \
-               individual_scores/OLS/traitB.profile \
-               individual_scores/OLS/traitC.profile \
-  --out individual_scores/wMT-OLS/
+  --scorefiles data/individual_scores/OLS/traitA.profile \
+               data/individual_scores/OLS/traitB.profile \
+               data/individual_scores/OLS/traitC.profile \
+  --out data/individual_scores/wMT-OLS/
 ```
 
 This will create a file "multi_trait.score" with columns FID, IID and the multi-trait profile score.
@@ -156,14 +156,15 @@ Multi-trait weighting can be applied to both OLS (GWAS) effects, as well as BLUP
 
 ```bash
 lambda=5000000
-for sumstats in `ls snp_effects/OLS/`; do
-      gcta --bfile testset/test \
-           --cojo-file snp_effects/OLS/${sumstats} \
+for sumstats in `ls data/snp_effects/OLS/`; do
+      gcta --bfile data/testset/test \
+           --cojo-file data/snp_effects/OLS/${sumstats} \
            --cojo-sblup ${lambda} \
            --cojo-wind 2000 \
            --thread-num 20 \
-           --out snp_effects/SBLUP/`basename ${sumstats} .txt`
-      awk '{print $1, $2, $4}' snp_effects/SBLUP/`basename ${sumstats} .txt`.sblup.cojo > snp_effects/SBLUP/`basename ${sumstats}`
+           --out data/snp_effects/SBLUP/`basename ${sumstats} .txt`
+      awk '{print $1, $2, $4}' data/snp_effects/SBLUP/`basename ${sumstats} .txt`.sblup.cojo > \
+                               data/snp_effects/SBLUP/`basename ${sumstats}`
 done
 ```
 
@@ -186,10 +187,10 @@ Further examples
 
 ```
 python ldsc_wrapper.py \
-    --out ldsc/ \
-    --files snp_effects/OLS/traitA.txt \
-            snp_effects/OLS/traitB.txt \
-            snp_effects/OLS/traitC.txt \
+    --out data/ldsc/ \
+    --files data/snp_effects/OLS/traitA.txt \
+            data/snp_effects/OLS/traitB.txt \
+            data/snp_effects/OLS/traitC.txt \
     --ldscpath /path/to/ldsc/ \
     --snplist /path/to/w_hm3.snplist \
     --ref_ld /path/to/eur_w_ld_chr/ \
@@ -217,8 +218,8 @@ If LDSC output files already exist, the following can be used to extract h2 and 
 
 ```
 python ldsc_wrapper.py \
-    --extract ldsc/ \
-    --out ldsc/
+    --extract data/ldsc/ \
+    --out data/ldsc/
 ```
 
 This will result in these files:
@@ -233,11 +234,11 @@ ldsc_h2s.txt
 
 ```
 python mt_weighting.py \
-  --h2file ldsc/ldsc_h2s.txt \
-  --rgfile ldsc/ldsc_rgs.txt \
-  --nfile ldsc/ldsc_ns.txt \
-  --betapath snp_effects/OLS/ \
-  --out snp_effects/wMT-OLS/ \
+  --h2file data/ldsc/ldsc_h2s.txt \
+  --rgfile data/ldsc/ldsc_rgs.txt \
+  --nfile data/ldsc/ldsc_ns.txt \
+  --betapath data/snp_effects/OLS/ \
+  --out data/snp_effects/wMT-OLS/ \
   --alltraits
 ```
 
@@ -261,8 +262,8 @@ python mt_weighting.py \
   --h2 $h2s \
   --rg $rgs \
   --n $ns \
-  --betapath snp_effects/OLS/ \
-  --out snp_effects/wMT-OLS/direct_input \
+  --betapath data/snp_effects/OLS/ \
+  --out data/snp_effects/wMT-OLS/direct_input \
   --alltraits
  ```
 
@@ -275,7 +276,7 @@ apply(combn(1:n, 2), 2, function(x) paste(x, collapse='-'))
 
 This produces the same output as before:
 ```
-diff snp_effects/wMT-OLS/direct_input.beta snp_effects/wMT-OLS/multi_trait.beta
+diff data/snp_effects/wMT-OLS/direct_input.beta data/snp_effects/wMT-OLS/multi_trait.beta
 ```
 
 To get only weights, don't provide any SNP effect or score files:
@@ -284,7 +285,7 @@ python mt_weighting.py \
   --h2 0.2 0.5 0.8 0.8 \
   --rg 0.8 0.8 0.8 0.5 0.5 0.5 \
   --n 1e4 1e5 1e5 1e6 \
-  --out snp_effects/wMT-OLS/weights_only \
+  --out data/snp_effects/wMT-OLS/weights_only \
   --alltraits
 ```
 
@@ -300,13 +301,13 @@ weights_only.log
 
 ```
 python mt_weighting.py \
-  --h2file ldsc/ldsc_h2s.txt \
-  --rgfile ldsc/ldsc_rgs.txt \
-  --nfile ldsc/ldsc_ns.txt \
-  --scorefiles individual_scores/SBLUP/traitA.profile \
-               individual_scores/SBLUP/traitB.profile \
-               individual_scores/SBLUP/traitC.profile \
-  --out individual_scores/wMT-SBLUP/ \
+  --h2file data/ldsc/ldsc_h2s.txt \
+  --rgfile data/ldsc/ldsc_rgs.txt \
+  --nfile data/ldsc/ldsc_ns.txt \
+  --scorefiles data/individual_scores/SBLUP/traitA.profile \
+               data/individual_scores/SBLUP/traitB.profile \
+               data/individual_scores/SBLUP/traitC.profile \
+  --out data/individual_scores/wMT-SBLUP/ \
   --alltraits \
   --blup
 ```
@@ -324,19 +325,19 @@ If meff is set to larger values than the default of 90000, the results will beco
 
 ```
 python mt_weighting.py \
-  --h2file ldsc/ldsc_h2s.txt \
-  --rgfile ldsc/ldsc_rgs.txt \
-  --nfile ldsc/ldsc_ns.txt \
-  --scorefiles individual_scores/SBLUP/traitA.profile \
-               individual_scores/SBLUP/traitB.profile \
-               individual_scores/SBLUP/traitC.profile \
-  --out individual_scores/wMT-SBLUP/multi_trait_olsweighting \
+  --h2file data/ldsc/ldsc_h2s.txt \
+  --rgfile data/ldsc/ldsc_rgs.txt \
+  --nfile data/ldsc/ldsc_ns.txt \
+  --scorefiles data/individual_scores/SBLUP/traitA.profile \
+               data/individual_scores/SBLUP/traitB.profile \
+               data/individual_scores/SBLUP/traitC.profile \
+  --out data/individual_scores/wMT-SBLUP/multi_trait_olsweighting \
   --alltraits
 ```
 
 ```R
-blupweights = read.table('individual_scores/wMT-SBLUP/multi_trait.score', h=T)
-olsweights = read.table('individual_scores/wMT-SBLUP/multi_trait_olsweighting.score', h=T)
+blupweights = read.table('data/individual_scores/wMT-SBLUP/multi_trait.score', h=T)
+olsweights = read.table('data/individual_scores/wMT-SBLUP/multi_trait_olsweighting.score', h=T)
 diag(cor(blupweights[,-1:-2], olsweights[,-1:-2]))
 #                     traitA                      traitB                    traitC
 #                  0.9976447                   0.9996590                 0.9998719
@@ -345,9 +346,9 @@ diag(cor(blupweights[,-1:-2], olsweights[,-1:-2]))
 Create individual scores using PLINK --score after multi-trait weighting:
 
 ```
-plink2 --bfile testset \
-       --score <( tail -n +2 snp_effects/wMT-OLS/multi_trait.beta )
-       --out individual_scores/wMT-OLS/traitA
+plink2 --bfile data/testset/test \
+       --score <( tail -n +2 data/snp_effects/wMT-OLS/multi_trait.beta )
+       --out data/individual_scores/wMT-OLS/traitA
 ```
 
 
@@ -355,20 +356,20 @@ plink2 --bfile testset \
 
 ```
 python mt_weighting.py \
-  --h2file ldsc/ldsc_h2s.txt \
-  --rgfile ldsc/ldsc_rgs.txt \
-  --nfile ldsc/ldsc_ns.txt \
-  --scorefiles individual_scores/OLS/traitA.profile \
-               individual_scores/OLS/traitB.profile \
-               individual_scores/OLS/traitC.profile \
-  --out sample_data/individual_scores/wMT-OLS/traitA
+  --h2file data/ldsc/ldsc_h2s.txt \
+  --rgfile data/ldsc/ldsc_rgs.txt \
+  --nfile data/ldsc/ldsc_ns.txt \
+  --scorefiles data/individual_scores/OLS/traitA.profile \
+               data/individual_scores/OLS/traitB.profile \
+               data/individual_scores/OLS/traitC.profile \
+  --out data/sample_data/individual_scores/wMT-OLS/traitA
 ```
 
 This demonstrates that first creating individual score files for each trait and then combining individual scores leads to similar results as first combining SNP effects for all traits and then creating individual scores from SNP effects.
 
 ```R
-combine_score = read.table('individual_scores/wMT-OLS/traitA.score', h=T)
-combine_beta = read.table('individual_scores/wMT-OLS/traitA.profile', h=T)
+combine_score = read.table('data/individual_scores/wMT-OLS/traitA.score', h=T)
+combine_beta = read.table('data/individual_scores/wMT-OLS/traitA.profile', h=T)
 cor(combine_score[,3], combine_beta$SCORE)
 # [1] 0.9573187
 ```
