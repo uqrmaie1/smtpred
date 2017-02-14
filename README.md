@@ -162,13 +162,24 @@ By default, only the median of the first 100 lines is used to determine the samp
 Converting OLS effects to SBLUP effects
 =======================================
 
-Multi-trait weighting can be applied to both OLS (GWAS) effects, as well as BLUP effects, which often result in higher prediction accuracy. Typically BLUP effects require individual level genotype data, but ```GCTA --cojo-sblub``` allows to transform OLS effects into BLUP-like (SBLUP) effects, requiring only summary statistics and an LD reference panel:
+Multi-trait weighting can be applied to both OLS (GWAS) effects, as well as BLUP effects, which often result in higher prediction accuracy. Typically BLUP effects require individual level genotype data, but ```GCTA --cojo-sblub``` allows to transform OLS effects into BLUP-like (SBLUP) effects, requiring only summary statistics and an LD reference panel.
+
+Converting OLS effects to SBLUP effects increases prediction accuracy because it results in conditional SNP effects rather than marginal SNP effects. It is therefore important that the set of SNPs is reduced to the set of SNPs used in the prediction set, before running this analysis:
+
+```bash
+mkdir data/snp_effects/OLS_intersecting_snps/
+for sumstats in `ls data/snp_effects/OLS/`; do
+   awk -vf="data/testset/test.bim" 'BEGIN{while(getline < f){rs[$2 $5]=1}} NR==1 || rs[$1 $2]==1' \
+       data/snp_effects/OLS/${sumstats} > data/snp_effects/OLS_intersecting_snps/${sumstats}
+done
+```
+In practice it would be advisable to match alleles between summary statistics and prediction set so that fewer SNPs are excluded, which is not done here to keep things simpler.
 
 ```bash
 lambda=5000000
-for sumstats in `ls data/snp_effects/OLS/`; do
+for sumstats in `ls data/snp_effects/OLS_intersecting_snps/`; do
       gcta --bfile data/testset/test \
-           --cojo-file data/snp_effects/OLS/${sumstats} \
+           --cojo-file data/snp_effects/OLS_intersecting_snps/${sumstats} \
            --cojo-sblup ${lambda} \
            --cojo-wind 2000 \
            --thread-num 20 \
@@ -179,10 +190,8 @@ done
 ```
 
 
+The shrinkage parameter lambda should be M * (1-h2)/h2, where M is the total number of (overlapping) markers and h2 is the SNP heritability of that trait. Here lambda is set to 5000000 for all traits, which would correspond to M = 1000000 and h2 = 0.166 for each trait.
 
-The shrinkage parameter lambda should be M * (1-h2)/h2, where M is the total number of (overlapping) markers and h2 is the SNP heritability of that trait.
-
-Converting OLS effects to SBLUP effects increases prediction accuracy because it results in conditional SNP effects rather than marginal SNP effects. It is therefore important that the set of SNPs is reduced to the set of SNPs used in the prediction set, before running this analysis.
 
 Summary statistics input files have to these columns: ```SNP```, ```A1```, ```A2```, ```freq```, ```b```, ```se```, ```p```, ```N```; and should include a header line. For more information see http://cnsgenomics.com/software/gcta/cojo.html.
 
