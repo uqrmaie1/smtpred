@@ -19,6 +19,7 @@ Table of Contents
     * [Weights](#weights)
     * [Variances](#variances)
 * [Additional options](#additional-options)
+* [LDSC wrapper](#ldsc-wrapper)
 * [Converting OLS effects to SBLUP effects](#converting-ols-effects-to-sblup-effects)
 * [Further examples](#further-examples)
     * [Using ldsc wrapper to get h2 and rg](#using-ldsc-wrapper-to-get-h2-and-rg)
