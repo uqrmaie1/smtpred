@@ -90,41 +90,84 @@ def get_n(args):
 #-----------------------------------------------------------------
 
 def munge_one(py, munge_sumstats, sumstats, n, snplist, out):
+    if not sumstats:
+        raise ValueError('Please provide sumstats file!')
+    if not snplist:
+        raise ValueError('Please provide SNP list file!')
     command = py + ' ' + munge_sumstats + ' --sumstats ' + sumstats + ' --N ' + str(n) + ' --merge-alleles ' + snplist + ' --out ' + out
-    subprocess.call(command, shell=True)
-
+    errorcode = subprocess.call(command, shell=True) 
+    if errorcode:
+        raise Exception('Error running "munge_sumstats.py"!')
 
 def ldsc_all(py, ldsc, basenames, ref_ld, w_ld, out):
-
+    if not ref_ld:
+        raise ValueError('Please ref_ld directory!')
+    if not w_ld:
+        raise ValueError('Please w_ld directory!')
     sumstats = [out + '/' + s + '.sumstats.gz' for s in basenames]
     for i, nam in enumerate(basenames[:]):
         sums = ','.join([sumstats[i]] + sumstats[i:])       
         command = py + ' ' + ldsc + ' --rg ' + sums + ' --ref-ld-chr ' + ref_ld + ' --w-ld-chr ' + w_ld + ' --out ' + out + '/' + nam
-        subprocess.call(command, shell=True)
+        errorcode = subprocess.call(command, shell=True)
+        if errorcode:
+            raise Exception('Error running "ldsc.py"!')
 
 
 #-----------------------------------------------------------------
 # read results
 #-----------------------------------------------------------------
 
-def extract_rg(ldsc_logfiles):
-    logger.info('extract rg...')
+def extract_h2_rg(ldsc_logfiles):
+    """
+    Args: ldsc_logfiles: directory of ldsc log files with h2 and rg estimates
+    Returns: h2out: dictionary with tuples of h2, se estimates for each trait. If multiple
+                  estimates are present for a trait, it returns the median of the h2 estimates
+             df: Pandas DataFrame with ldsc rg results
+    """
+    logger.info('extract h2 and rg...')
     logger.debug('reading ldsc logfiles:' + '\n'.join(ldsc_logfiles))
     df = None
+    h2s = {}
+    ses = {}
     for i, fil in enumerate(ldsc_logfiles):
-        with open(fil, 'r') as f:
-            l = f.readline()
-            while l != '':
-                if re.match(r'\s*p1', l) != None:
-                    if df is None:
-                        df = pandas.DataFrame(columns=l.split())
-                    l = f.readline()
-                    while not re.match(r'^\s+$', l) and len(l.split()) == 12:
-                        df.loc[df.shape[0] + 1] = l.split()
-                        l = f.readline()
-                    break
-                l = f.readline()
-    return df
+        nam = None
+        f = open(fil, 'r')
+        for l in f.readlines():
+            spl = l.split()
+            # h2 header
+            if re.match(r'^Reading summary statistics from ', l) != None and nam == None:
+                nam = re.sub('.+/', '', re.sub('.sumstats.gz ...\n', '', l))
+            # h2 line
+            if re.match(r'^Total Observed scale h2', l) != None:
+                h2 = float(re.sub(' .+', '', re.sub('.+: ', '', l)))
+                se = float(re.sub('\).*', '', re.sub('.+\(', '', l)))
+                if nam not in h2s:
+                    h2s[nam] = [h2]
+                    ses[nam] = [se]
+                else:
+                    h2s[nam] += [h2]
+                    ses[nam] += [se]
+            # rg header
+            if re.match(r'\s*p1', l) != None:
+                if df is None:
+                    df = pandas.DataFrame(columns=spl)
+            # rg line
+            if len(spl) == 12:
+                rgline = True
+                for stri in spl[2:]:
+                    try:
+                        float(stri)
+                    except ValueError:
+                        rgline = False
+                if rgline:
+                    df.loc[df.shape[0] + 1] = l.split()
+        f.close()
+    medianpos = [numpy.argsort(x)[len(x)//2] for x in h2s.itervalues() ]
+    h2out = {}
+    # order of dict is guaranteed if not modified
+    for i, (k, v) in enumerate(h2s.iteritems()):
+        h2out[k] = (h2s[k][medianpos[i]], ses[k][medianpos[i]])
+    return h2out, df
 
 def extract_h2(ldsc_logfiles):
     logger.info('extract h2...')
@@ -207,17 +250,16 @@ def main():
 
         ldsc_all(py, ldsc, basenames, args.ref_ld, args.w_ld, args.out)
 
-        rg_df = extract_rg([ args.out + '/' + s + '.log' for s in basenames ])
-        h2s = extract_h2([ args.out + '/' + s + '.log' for s in basenames ])
+        h2s, rg_df = extract_h2_rg([ args.out + '/' + s + '.log' for s in basenames ])
 
         write_n(ns, args.out + '/ldsc_ns.txt')
 
     else:
         logfiles = [args.extract + '/' + x for x in os.listdir(args.extract) if x.endswith('.log')]
-        rg_df = extract_rg(logfiles)
-        h2s = extract_h2(logfiles)
+        h2s, rg_df = extract_h2_rg(logfiles)
+        #h2s = extract_h2(logfiles)
 
-    #code.interact(local=dict(globals(), **locals()))
+    
     write_rg(rg_df, args.out + '/ldsc_rgs.txt')
     write_h2(h2s, args.out + '/ldsc_h2s.txt')
     

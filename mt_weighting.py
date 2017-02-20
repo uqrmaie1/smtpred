@@ -531,6 +531,11 @@ def fix_variance(mat, expected_variances):
 
 
 def apply_weights(mat, weights):
+    """
+    Args: mat: numpy array with single trait SNP effects or individual scores
+          weights: ntraits * ntraits numpy array with weights for each trait
+    Returns: numpy array of multi trait SNP effects or individual scores
+    """
     mt_effects = numpy.zeros([numpy.shape(mat)[1], Values.ntraits])
     for i in range(Values.ntraits):
         for j in range(Values.ntraits):
@@ -543,7 +548,7 @@ def get_mt_effects(st_data, weights, expected_variances):
     Args: st_data: list of pandas DataFrames with single-trait SNP effects or individual scores
           weights: ntraits * ntraits numpy array with weights for each trait
           expected_variances: theoretical variance which each trait should have given n, h2 and rg
-    Returns: numpy matirx of multi-trait SNP-effects or multi-trait individual scores
+    Returns: numpy matrix of multi-trait SNP-effects or multi-trait individual scores
     """
 
     mat = get_st_matrix(st_data, Values.numindex)
