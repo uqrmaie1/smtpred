@@ -552,7 +552,7 @@ def get_mt_effects(st_data, weights, expected_variances):
     """
 
     mat = get_st_matrix(st_data, Values.numindex)
-    #code.interact(local=dict(globals(), **locals()))
+    
     mat = fix_variance(mat, expected_variances)
     return apply_weights(mat, weights)
 
@@ -569,13 +569,13 @@ def main():
 
     # extract trait names
     if args.scorefiles != None:
-        Values.basenames = sorted(map(lambda x: os.path.splitext(os.path.basename(x))[0], args.scorefiles))
+        Values.basenames = map(lambda x: os.path.splitext(os.path.basename(x))[0], args.scorefiles)
     elif args.betafiles != None:
-        Values.basenames = sorted(map(lambda x: os.path.splitext(os.path.basename(x))[0], args.betafiles))
+        Values.basenames = map(lambda x: os.path.splitext(os.path.basename(x))[0], args.betafiles)
     elif args.scorepath != None:
-        Values.basenames = [re.sub('.profile', '', x) for x in os.listdir(args.scorepath)]
+        Values.basenames = [re.sub('.profile', '', x) for x in sorted(os.listdir(args.scorepath))]
     elif args.betapath != None:
-        Values.basenames = [re.sub('.txt', '', x) for x in os.listdir(args.betapath)]
+        Values.basenames = [re.sub('.txt', '', x) for x in sorted(os.listdir(args.betapath))]
     elif args.nfile != None:
         Values.basenames = get_names_from_nfile(args.nfile)
     else:
@@ -612,7 +612,7 @@ def main():
 
         logger.info('calculate multi-trait ' + ('scores' if args.scorefiles or args.scorepath else 'SNP effects' ) + '...')
         mt_effects = get_mt_effects(st_data, weights, expected_variances)
-
+        #code.interact(local=dict(globals(), **locals()))
         write_output(mt_effects, args.out, args)
 
 
