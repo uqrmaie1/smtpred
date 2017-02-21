@@ -4,6 +4,7 @@ A program to combine SNP effects or individual scores from multiple-traits accor
 Table of Contents
 =================
 
+* [Installation](#installation)
 * [Simple Example](#simple-example)
 * [General process](#general-process)
 * [Input formats](#input-formats)
@@ -18,6 +19,7 @@ Table of Contents
     * [Weights](#weights)
     * [Variances](#variances)
 * [Additional options](#additional-options)
+* [LDSC wrapper](#ldsc-wrapper)
 * [Converting OLS effects to SBLUP effects](#converting-ols-effects-to-sblup-effects)
 * [Further examples](#further-examples)
     * [Using ldsc wrapper to get h2 and rg](#using-ldsc-wrapper-to-get-h2-and-rg)
@@ -25,6 +27,15 @@ Table of Contents
     * [Weighting OLS SNP effects](#weighting-ols-snp-effects)
     * [Weighting SBLUP individual scores](#weighting-sblup-individual-scores)
     * [Weighting OLS individual score (profile scores) files](#weighting-ols-individual-score-profile-scores-files)
+
+
+Installation
+============
+
+Change into your directory of choice and type ```git clone https://github.com/uqrmaie1/mtweighting.git```, or click on the green download button to download the zip file. This will take up around 78 MB. Change into the directory ```mtweighting```. With a bit of luck, the example in the next section should run without problems. If it doesn't, make sure ```python``` refers to version 2.7 and not 3.x, and that all the necessary libraries are installed.
+
+This has been tested under OS X 10.11.6 and under CentOS release 6.8.
+
 
 Simple example
 ==============
@@ -36,10 +47,10 @@ python mt_weighting.py \
   --h2 0.5 0.5 0.5 \
   --rg 0.5 0.5 0.5 \
   --n 1e5 1e5 1e5 \
-  --scorefiles individual_scores/OLS/traitA.profile \
-               individual_scores/OLS/traitB.profile \
-               individual_scores/OLS/traitC.profile \
-  --out individual_scores/wMT-OLS/
+  --scorefiles data/individual_scores/OLS/traitA.profile \
+               data/individual_scores/OLS/traitB.profile \
+               data/individual_scores/OLS/traitC.profile \
+  --out data/individual_scores/wMT-OLS/
 ```
 
 This will create a file "multi_trait.score" with columns FID, IID and the multi-trait profile score.
@@ -58,7 +69,7 @@ Input formats
 
 ## SNP effect files
 
-Weighting is performed on SNP effects, if the option ```--betafiles``` or ```--betapath``` is specified. SNP effect files for each trait all have to be in the same format, and have to have a header line with three required fields: SNP ID (called "snp", "snpid", "rs", "rsid"; case insensitive), effect allele (called "a1"; case insensitive) and SNP effect (called "beta" or "b"; case insensitive). SNP IDs will be matched on their ID and effect allele "a1", and optionally on "a2" if it exists. "a1" (and "a2") have to match exactly among traits, otherwise the SNP will not be used.
+Weighting is performed on SNP effects, if the option ```--betafiles``` or ```--betapath``` is specified. SNP effect files for each trait all have to be in the same format, and have to have a header line with three required fields: SNP ID (called ```snp```, ```snpid```, ```rs```, ```rsid```; case insensitive), effect allele (called ```a1```; case insensitive) and SNP effect (called ```beta``` or ```b```; case insensitive). SNP IDs will be matched on their ID and effect allele ```a1```, and optionally on ```a2``` if it exists. ```a1``` (and ```a2```) have to match exactly among traits, otherwise the SNP will not be used.
 
 ## Score files
 
@@ -95,7 +106,7 @@ If individual scores have been provided as input, the file ```multi_trait.score`
 
 ## Variances
 
-```multi_trait.variances``` will contain expected variances for each trait. This is necessary becasue the weights assume that the variances of the SNP effects are exactly identical to their expectations. Since that is not always the case, each trait is scaled to its expected variance before weighting. For OLS effects the expected variance for each trait is h2/mtot + 1/n. For BLUP effects the expected variance for each trait is R2/meff, where R2 = h2/(1+meff*(1-R2)/(n*h2)). Despite the differences in weights and expected variances between OLS and BLUP effects, the combined effect of both will mostly cancel out and the specification of the ```--blup``` option will not change the weighted output substantially.
+```multi_trait.variances``` will contain expected variances for each trait. This is necessary becasue the weights assume that the variances of the SNP effects are exactly identical to their expectations. Since that is not always the case, each trait is scaled to its expected variance before weighting. For OLS effects the expected variance for each trait is h2/mtot + 1/n. For BLUP effects the expected variance for each trait is R2/meff, where R2 = h2/(1+meff\*(1-R2)/(n\*h2)). Despite the differences in weights and expected variances between OLS and BLUP effects, the combined effect of both will mostly cancel out and the specification of the ```--blup``` option will not change the weighted output substantially.
 
 Additional options
 ==================
@@ -107,7 +118,7 @@ This option specifies that multi-trait weighting should be performed for all tra
 
 ## ```--blup```
 
-This option specifies that the input SNP effect or individual scores are estimated using BLUP, rather than OLS (GWAS estimates). This will affect both weights and expected variances, and have a small effect on the resulting multi-trait SNP effects and individual scores.
+This option specifies that the input SNP effect or individual scores are estimated using BLUP, rather than OLS (GWAS estimates). This will affect both weights and expected variances, but has only a small effect on the resulting multi-trait SNP effects and individual scores.
 
 ## ```--skipidcheck```
 
@@ -152,26 +163,38 @@ By default, only the median of the first 100 lines is used to determine the samp
 Converting OLS effects to SBLUP effects
 =======================================
 
-Multi-trait weighting can be applied to both OLS (GWAS) effects, as well as BLUP effects, which often result in higher prediction accuracy. Typically BLUP effects require individual level genotype data, but ```GCTA --cojo-sblub``` allows to transform OLS effects into BLUP-like (SBLUP) effects, requiring only summary statistics and an LD reference panel:
+Multi-trait weighting can be applied to both OLS (GWAS) effects, as well as BLUP effects, which often result in higher prediction accuracy. Typically BLUP effects require individual level genotype data, but ```GCTA --cojo-sblub``` allows to transform OLS effects into BLUP-like (SBLUP) effects, requiring only summary statistics and an LD reference panel.
+
+Converting OLS effects to SBLUP effects increases prediction accuracy because it results in conditional SNP effects rather than marginal SNP effects. It is therefore important that the set of SNPs is reduced to the set of SNPs used in the prediction set, before running this analysis:
+
+```bash
+mkdir data/snp_effects/OLS_intersecting_snps/
+for sumstats in `ls data/snp_effects/OLS/`; do
+   awk -vf="data/testset/test.bim" 'BEGIN{while(getline < f){rs[$2 $5]=1}} NR==1 || rs[$1 $2]==1' \
+       data/snp_effects/OLS/${sumstats} > data/snp_effects/OLS_intersecting_snps/${sumstats}
+done
+```
+In practice it would be advisable to match alleles between summary statistics and prediction set so that fewer SNPs are excluded, which is not done here to keep things simpler.
 
 ```bash
 lambda=5000000
-for sumstats in `ls snp_effects/OLS/`; do
-      gcta --bfile testset/test \
-           --cojo-file snp_effects/OLS/${sumstats} \
+for sumstats in `ls data/snp_effects/OLS_intersecting_snps/`; do
+      gcta --bfile data/testset/test \
+           --cojo-file data/snp_effects/OLS_intersecting_snps/${sumstats} \
            --cojo-sblup ${lambda} \
            --cojo-wind 2000 \
            --thread-num 20 \
-           --out snp_effects/SBLUP/`basename ${sumstats} .txt`
-      awk '{print $1, $2, $4}' snp_effects/SBLUP/`basename ${sumstats} .txt`.sblup.cojo > snp_effects/SBLUP/`basename ${sumstats}`
+           --out data/snp_effects/SBLUP/`basename ${sumstats} .txt`
+      awk '{print $1, $2, $4}' data/snp_effects/SBLUP/`basename ${sumstats} .txt`.sblup.cojo > \
+                               data/snp_effects/SBLUP/`basename ${sumstats}`
 done
 ```
 
 
+The shrinkage parameter lambda should be M * (1-h2)/h2, where M is the total number of (overlapping) markers and h2 is the SNP heritability of that trait. Here lambda is set to 5000000 for all traits, which would correspond to M = 1000000 and h2 = 0.166 for each trait.
 
-The shrinkage parameter lambda should be M * (1-h2)/h2, where M is the total number of (overlapping) markers and h2 is the SNP heritability of that trait.
 
-Summary statistics input files have to these columns: SNP, A1, A2, freq, b, se, p, N; and should include a header line. For more information see http://cnsgenomics.com/software/gcta/cojo.html.
+Summary statistics input files have to these columns: ```SNP```, ```A1```, ```A2```, ```freq```, ```b```, ```se```, ```p```, ```N```; and should include a header line. For more information see http://cnsgenomics.com/software/gcta/cojo.html.
 
 The reference panel genotype file should be in PLINK binary format. For more information see https://www.cog-genomics.org/plink2/formats#bed.
 
@@ -184,19 +207,28 @@ Further examples
 
 ## Using ldsc wrapper to get h2 and rg
 
+GCTA and ldsc require slightly different notation in the header line:
+
+```
+mkdir data/snp_effects/OLS_ldsc/
+awk 'NR==1 {gsub("b", "beta")} {print}' data/snp_effects/OLS/traitA.txt > data/snp_effects/OLS_ldsc/traitA.txt
+awk 'NR==1 {gsub("b", "beta")} {print}' data/snp_effects/OLS/traitB.txt > data/snp_effects/OLS_ldsc/traitB.txt
+awk 'NR==1 {gsub("b", "beta")} {print}' data/snp_effects/OLS/traitC.txt > data/snp_effects/OLS_ldsc/traitC.txt
+```
+
 ```
 python ldsc_wrapper.py \
-    --out ldsc/ \
-    --files snp_effects/OLS/traitA.txt \
-            snp_effects/OLS/traitB.txt \
-            snp_effects/OLS/traitC.txt \
+    --out data/ldsc/ \
+    --files data/snp_effects/OLS_ldsc/traitA.txt \
+            data/snp_effects/OLS_ldsc/traitB.txt \
+            data/snp_effects/OLS_ldsc/traitC.txt \
     --ldscpath /path/to/ldsc/ \
     --snplist /path/to/w_hm3.snplist \
     --ref_ld /path/to/eur_w_ld_chr/ \
-    --w_ld /path/to/eur_w_ld_chr/ \
+    --w_ld /path/to/eur_w_ld_chr/
 ```
 
-Will result in these files:
+This will result in these files:
 ```
 traitA.sumstats.gz
 traitB.sumstats.gz
@@ -217,8 +249,8 @@ If LDSC output files already exist, the following can be used to extract h2 and 
 
 ```
 python ldsc_wrapper.py \
-    --extract ldsc/ \
-    --out ldsc/
+    --extract data/ldsc/ \
+    --out data/ldsc/
 ```
 
 This will result in these files:
@@ -233,11 +265,11 @@ ldsc_h2s.txt
 
 ```
 python mt_weighting.py \
-  --h2file ldsc/ldsc_h2s.txt \
-  --rgfile ldsc/ldsc_rgs.txt \
-  --nfile ldsc/ldsc_ns.txt \
-  --betapath snp_effects/OLS/ \
-  --out snp_effects/wMT-OLS/ \
+  --h2file data/ldsc/ldsc_h2s.txt \
+  --rgfile data/ldsc/ldsc_rgs.txt \
+  --nfile data/ldsc/ldsc_ns.txt \
+  --betapath data/snp_effects/OLS/ \
+  --out data/snp_effects/wMT-OLS/ \
   --alltraits
 ```
 
@@ -253,16 +285,16 @@ multi_trait.log
 Equivalently, parameters can be specified on the command line rather than in files
 
 ```bash
-h2s=`awk '{printf $2 " "}' ldsc/ldsc_h2s.txt`
-rgs=`awk '{printf $3 " "}' ldsc/ldsc_rgs.txt`
-ns=`awk '{printf $2 " "}' ldsc/ldsc_ns.txt`
+h2s=`awk '{printf $2 " "}' data/ldsc/ldsc_h2s.txt`
+rgs=`awk '{printf $3 " "}' data/ldsc/ldsc_rgs.txt`
+ns=`awk '{printf $2 " "}' data/ldsc/ldsc_ns.txt`
 
 python mt_weighting.py \
   --h2 $h2s \
   --rg $rgs \
   --n $ns \
-  --betapath snp_effects/OLS/ \
-  --out snp_effects/wMT-OLS/direct_input \
+  --betapath data/snp_effects/OLS/ \
+  --out data/snp_effects/wMT-OLS/direct_input \
   --alltraits
  ```
 
@@ -275,7 +307,7 @@ apply(combn(1:n, 2), 2, function(x) paste(x, collapse='-'))
 
 This produces the same output as before:
 ```
-diff snp_effects/wMT-OLS/direct_input.beta snp_effects/wMT-OLS/multi_trait.beta
+diff data/snp_effects/wMT-OLS/direct_input.beta data/snp_effects/wMT-OLS/multi_trait.beta
 ```
 
 To get only weights, don't provide any SNP effect or score files:
@@ -284,7 +316,7 @@ python mt_weighting.py \
   --h2 0.2 0.5 0.8 0.8 \
   --rg 0.8 0.8 0.8 0.5 0.5 0.5 \
   --n 1e4 1e5 1e5 1e6 \
-  --out snp_effects/wMT-OLS/weights_only \
+  --out data/snp_effects/wMT-OLS/weights_only \
   --alltraits
 ```
 
@@ -300,13 +332,13 @@ weights_only.log
 
 ```
 python mt_weighting.py \
-  --h2file ldsc/ldsc_h2s.txt \
-  --rgfile ldsc/ldsc_rgs.txt \
-  --nfile ldsc/ldsc_ns.txt \
-  --scorefiles individual_scores/SBLUP/traitA.profile \
-               individual_scores/SBLUP/traitB.profile \
-               individual_scores/SBLUP/traitC.profile \
-  --out individual_scores/wMT-SBLUP/ \
+  --h2file data/ldsc/ldsc_h2s.txt \
+  --rgfile data/ldsc/ldsc_rgs.txt \
+  --nfile data/ldsc/ldsc_ns.txt \
+  --scorefiles data/individual_scores/SBLUP/traitA.profile \
+               data/individual_scores/SBLUP/traitB.profile \
+               data/individual_scores/SBLUP/traitC.profile \
+  --out data/individual_scores/wMT-SBLUP/ \
   --alltraits \
   --blup
 ```
@@ -324,30 +356,30 @@ If meff is set to larger values than the default of 90000, the results will beco
 
 ```
 python mt_weighting.py \
-  --h2file ldsc/ldsc_h2s.txt \
-  --rgfile ldsc/ldsc_rgs.txt \
-  --nfile ldsc/ldsc_ns.txt \
-  --scorefiles individual_scores/SBLUP/traitA.profile \
-               individual_scores/SBLUP/traitB.profile \
-               individual_scores/SBLUP/traitC.profile \
-  --out individual_scores/wMT-SBLUP/multi_trait_olsweighting \
+  --h2file data/ldsc/ldsc_h2s.txt \
+  --rgfile data/ldsc/ldsc_rgs.txt \
+  --nfile data/ldsc/ldsc_ns.txt \
+  --scorefiles data/individual_scores/SBLUP/traitA.profile \
+               data/individual_scores/SBLUP/traitB.profile \
+               data/individual_scores/SBLUP/traitC.profile \
+  --out data/individual_scores/wMT-SBLUP/multi_trait_olsweighting \
   --alltraits
 ```
 
 ```R
-blupweights = read.table('individual_scores/wMT-SBLUP/multi_trait.score', h=T)
-olsweights = read.table('individual_scores/wMT-SBLUP/multi_trait_olsweighting.score', h=T)
+blupweights = read.table('data/individual_scores/wMT-SBLUP/multi_trait.score', h=T)
+olsweights = read.table('data/individual_scores/wMT-SBLUP/multi_trait_olsweighting.score', h=T)
 diag(cor(blupweights[,-1:-2], olsweights[,-1:-2]))
 #                     traitA                      traitB                    traitC
-#                  0.9976447                   0.9996590                 0.9998719
+#                  0.9976878                   0.9996627                 0.9998622
 ```
 
 Create individual scores using PLINK --score after multi-trait weighting:
 
 ```
-plink2 --bfile testset \
-       --score <( tail -n +2 snp_effects/wMT-OLS/multi_trait.beta )
-       --out individual_scores/wMT-OLS/traitA
+plink2 --bfile data/testset/test \
+       --score <( tail -n +2 data/snp_effects/wMT-OLS/multi_trait.beta )
+       --out data/individual_scores/wMT-OLS/traitA
 ```
 
 
@@ -355,22 +387,22 @@ plink2 --bfile testset \
 
 ```
 python mt_weighting.py \
-  --h2file ldsc/ldsc_h2s.txt \
-  --rgfile ldsc/ldsc_rgs.txt \
-  --nfile ldsc/ldsc_ns.txt \
-  --scorefiles individual_scores/OLS/traitA.profile \
-               individual_scores/OLS/traitB.profile \
-               individual_scores/OLS/traitC.profile \
-  --out sample_data/individual_scores/wMT-OLS/traitA
+  --h2file data/ldsc/ldsc_h2s.txt \
+  --rgfile data/ldsc/ldsc_rgs.txt \
+  --nfile data/ldsc/ldsc_ns.txt \
+  --scorefiles data/individual_scores/OLS/traitA.profile \
+               data/individual_scores/OLS/traitB.profile \
+               data/individual_scores/OLS/traitC.profile \
+  --out data/individual_scores/wMT-OLS/traitA
 ```
 
 This demonstrates that first creating individual score files for each trait and then combining individual scores leads to similar results as first combining SNP effects for all traits and then creating individual scores from SNP effects.
 
 ```R
-combine_score = read.table('individual_scores/wMT-OLS/traitA.score', h=T)
-combine_beta = read.table('individual_scores/wMT-OLS/traitA.profile', h=T)
+combine_score = read.table('data/individual_scores/wMT-OLS/traitA.score', h=T)
+combine_beta = read.table('data/individual_scores/wMT-OLS/traitA.profile', h=T)
 cor(combine_score[,3], combine_beta$SCORE)
-# [1] 0.9573187
+# [1] 0.9521655
 ```
 
 
