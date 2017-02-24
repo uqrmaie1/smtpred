@@ -85,11 +85,11 @@ File that contains sample size of each trait (option ```--nfile```). This file h
 
 ## h<sup>2</sup> file
 
-File that contains SNP heritability estimates of each trait (option ```--h2file```). This file has no header and two columns: Trait and SNP heritability. Alternatively SNP heritability input can be provided directly using the option ```--h2```.
+File that contains SNP-heritability estimates of each trait (option ```--h2file```). This file has no header and two columns: Trait and SNP-heritability. Alternatively SNP-heritability input can be provided directly using the option ```--h2```.
 
 ## r<sub>G</sub> file
 
-File that contains genetic correlation (r<sub>G</sub>) estimates of each trait (option ```--rgfile```). This file has no header and three columns: Trait 1, Trait 2 and SNP heritability. Alternatively genetic correlation input can be provided directly using the option ```--rg```.
+File that contains genetic correlation (r<sub>G</sub>) estimates of each trait (option ```--rgfile```). This file has no header and three columns: Trait 1, Trait 2 and SNP-heritability. Alternatively genetic correlation input can be provided directly using the option ```--rg```.
 
 
 Output formats
@@ -143,7 +143,7 @@ This option specfies the location of the output files. If a path is given, the o
 LDSC wrapper
 ===============
 
-Multi trait weighting requires SNP heritability estimates for each trait and r<sub>G</sub> estimates for each pair of traits. If only summary statistics are available, LD score regression can be used to estimate these parameters. ```ldsc_wrapper.py``` is a wrapper around LD score regression, and in addition it extracts the parameters of interest from the LD score regression output files and saves them in the format used by ```mt_weighting.py```.
+Multi trait weighting requires SNP-heritability estimates for each trait and r<sub>G</sub> estimates for each pair of traits. If only summary statistics are available, LD score regression can be used to estimate these parameters. ```ldsc_wrapper.py``` is a wrapper around LD score regression, and in addition it extracts the parameters of interest from the LD score regression output files and saves them in the format used by ```mt_weighting.py```.
 
 If LD score regression has already been run, the ```--extract``` option can be used to only process LD score regression output files.
 
@@ -194,7 +194,7 @@ done
 ```
 
 
-The shrinkage parameter lambda should be M * (1-h<sup>2</sup>)/h<sup>2</sup>, where M is the total number of (overlapping) markers and h2 is the SNP heritability of that trait. Here lambda is set to 5000000 for all traits, which would correspond to M = 1000000 and h<sup>2</sup> = 0.166 for each trait.
+The shrinkage parameter lambda should be M * (1-h<sup>2</sup>)/h<sup>2</sup>, where M is the total number of (overlapping) markers and h2 is the SNP-heritability of that trait. Here lambda is set to 5000000 for all traits, which would correspond to M = 1000000 and h<sup>2</sup> = 0.166 for each trait.
 
 
 Summary statistics input files have to these columns: ```SNP```, ```A1```, ```A2```, ```freq```, ```b```, ```se```, ```p```, ```N```; and should include a header line. For more information see http://cnsgenomics.com/software/gcta/cojo.html.
