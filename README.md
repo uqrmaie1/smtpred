@@ -32,7 +32,7 @@ Table of Contents
 Introduction
 ============
 
-Summary statistics from multiple genetically correlated traits can be combined to obtain more accuracte estimates of SNP effects for each trait. More accurate SNP effects lead to higher prediction accuracy. This program combines SNP effects from multiple traits in a way that maximizes the expected prediction accuracy.
+Summary statistics from multiple genetically correlated traits can be combined to obtain more accuracte estimates of SNP effects for each trait. More accurate SNP effects lead to higher prediction accuracy. This program combines SNP effects from multiple traits in a way that maximizes the expected prediction accuracy. To do so, it requires estimates of sample size and SNP-heritability (h<sup>2</sup>) for each trait, and genetic correlation (r<sub>G</sub>) for all pairs of traits.
 
 It is also possible to first calculate polygenic risk scores for each trait and then combine those, rather than to combine SNP effects for all trait first and then use those combined SNP effects to calculate polygenic risk scores. This can be computationally faster if polygenic risk scores for each trait already exist and will result in the same multi-triat predictor, if there are no missing SNPs.
 
