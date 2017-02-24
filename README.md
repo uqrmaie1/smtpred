@@ -1,18 +1,18 @@
 # MTweighting
-A program to combine SNP effects or individual scores from multiple-traits according to their sample size, h2 and rg.
+A program to combine SNP effects or individual scores from multiple-traits according to their sample size, SNP-heritability (h<sup>2</sup>) and genetic correlation (r<sub>G</sub>).
 
 Table of Contents
 =================
 
+* [Introduction](#introduction)
 * [Installation](#installation)
 * [Simple Example](#simple-example)
-* [General process](#general-process)
 * [Input formats](#input-formats)
     * [SNP effect files](#snp-effect-files)
     * [Score files](#score-files)
     * [Sample size file](#sample-size-file)
-    * [h2 file](#h2-file)
-    * [rg file](#rg-file)
+    * [h<sup>2</sup> file](#h2-file)
+    * [r<sub>G</sub> file](#rg-file)
 * [Output formats](#output-formats)
     * [SNP effect file](#snp-effect-file)
     * [Score file](#score-file)
@@ -22,12 +22,23 @@ Table of Contents
 * [LDSC wrapper](#ldsc-wrapper)
 * [Converting OLS effects to SBLUP effects](#converting-ols-effects-to-sblup-effects)
 * [Further examples](#further-examples)
-    * [Using ldsc wrapper to get h2 and rg](#using-ldsc-wrapper-to-get-h2-and-rg)
-    * [Using ldsc wrapper to extract h2 and rg](#using-ldsc-wrapper-to-extract-h2-and-rg)
+    * [Using ldsc wrapper to get h<sup>2</sup> and r<sub>G</sub>](#using-ldsc-wrapper-to-get-h2-and-rg)
+    * [Using ldsc wrapper to extract h<sup>2</sup> and r<sub>G</sub>](#using-ldsc-wrapper-to-extract-h2-and-rg)
     * [Weighting OLS SNP effects](#weighting-ols-snp-effects)
     * [Weighting SBLUP individual scores](#weighting-sblup-individual-scores)
     * [Weighting OLS individual score (profile scores) files](#weighting-ols-individual-score-profile-scores-files)
 
+
+Introduction
+============
+
+Summary statistics from multiple genetically correlated traits can be combined to obtain more accuracte estimates of SNP effects for each trait. More accurate SNP effects lead to higher prediction accuracy. This program combines SNP effects from multiple traits in a way that maximizes the expected prediction accuracy.
+
+It is also possible to first calculate polygenic risk scores for each trait and then combine those, rather than to combine SNP effects for all trait first and then use those combined SNP effects to calculate polygenic risk scores. This can be computationally faster if polygenic risk scores for each trait already exist and will result in the same multi-triat predictor, if there are no missing SNPs.
+
+By default it is assumed that single trait SNP effects are OLS estimates (GWAS profile scores). If instead of OLS estimates they are BLUP or SBLUP estimates, the ```--blup``` option can be used to calculate the appropriate weights. Even though the weights will be different under this option, the resulting weighted sum will be very similar, because of changes in the expected variance of the SNP effects or individual scores.
+
+The examples below can be recreted using the files in the data directory. However, since this data is based on traits with low r<sub>G</sub>, it will not necessarily increase prediction accuracy.
 
 Installation
 ============
@@ -40,7 +51,7 @@ This has been tested under OS X 10.11.6 and under CentOS release 6.8.
 Simple example
 ==============
 
-Let's say we want to combine traitA, traitB and traitC to create a more accurate predictor for traitA. It is assumed that single-trait predictors for traitA, traitB and traitC already exist, and that N, h2 and rg are known and are 1e5, 0.5 and 0.5, respectively.
+Let's say we want to combine traitA, traitB and traitC to create a more accurate predictor for traitA. It is assumed that single-trait predictors for traitA, traitB and traitC already exist, and that N, h<sup>2</sup> and r<sub>G</sub> are known and are 1e5, 0.5 and 0.5, respectively.
 
 ```
 python mt_weighting.py \
@@ -55,14 +66,6 @@ python mt_weighting.py \
 
 This will create a file "multi_trait.score" with columns FID, IID and the multi-trait profile score.
 
-General process
-===============
-
-When combining multiple traits to create a more powerful predictor, it is possible to either generate a weighted sum of SNP effects and use those for weighting, or to first create individual scores for each trait (using the ```PLINK --score``` function) and then create a weighted sum of those. If the set of SNPs for each trait is similar, the resulting predictor will also be very similar.
-
-By default it is assumed that single trait SNP effects are OLS estimates (GWAS profile scores). If instead of OLS estimates they are BLUP or SBLUP estimates, the ```--blup``` option can be used to calculate the appropriate weights. Even though the weights will be different under this option, the resulting weighted sum will be very similar, because of changes in the expected variance of the SNP effects or individual scores.
-
-The examples below can be recreted using the files in the data directory. However, since this data is based on traits with low rg, it will not necessarily increase prediction accuracy.
 
 Input formats
 =============
@@ -80,13 +83,13 @@ Weighting is performed on individual scores, if the option ```--scorefiles``` or
 
 File that contains sample size of each trait (option ```--nfile```). This file has no header and two columns: Trait and sample size. Alternatively sample size input can be provided directly using the option ```--n```.
 
-## h2 file
+## h<sup>2</sup> file
 
 File that contains SNP heritability estimates of each trait (option ```--h2file```). This file has no header and two columns: Trait and SNP heritability. Alternatively SNP heritability input can be provided directly using the option ```--h2```.
 
-## rg file
+## r<sub>G</sub> file
 
-File that contains genetic correlation (rg) estimates of each trait (option ```--rgfile```). This file has no header and three columns: Trait 1, Trait 2 and SNP heritability. Alternatively genetic correlation input can be provided directly using the option ```--rg```.
+File that contains genetic correlation (r<sub>G</sub>) estimates of each trait (option ```--rgfile```). This file has no header and three columns: Trait 1, Trait 2 and SNP heritability. Alternatively genetic correlation input can be provided directly using the option ```--rg```.
 
 
 Output formats
@@ -106,7 +109,7 @@ If individual scores have been provided as input, the file ```multi_trait.score`
 
 ## Variances
 
-```multi_trait.variances``` will contain expected variances for each trait. This is necessary becasue the weights assume that the variances of the SNP effects are exactly identical to their expectations. Since that is not always the case, each trait is scaled to its expected variance before weighting. For OLS effects the expected variance for each trait is h2/mtot + 1/n. For BLUP effects the expected variance for each trait is R2/meff, where R2 = h2/(1+meff\*(1-R2)/(n\*h2)). Despite the differences in weights and expected variances between OLS and BLUP effects, the combined effect of both will mostly cancel out and the specification of the ```--blup``` option will not change the weighted output substantially.
+```multi_trait.variances``` will contain expected variances for each trait. This is necessary becasue the weights assume that the variances of the SNP effects are exactly identical to their expectations. Since that is not always the case, each trait is scaled to its expected variance before weighting. For OLS effects the expected variance for each trait is h<sup>2</sup>/mtot + 1/n. For BLUP effects the expected variance for each trait is R<sup>2</sup>/meff, where R<sup>2</sup> = h<sup>2</sup>/(1+meff\*(1-R<sup>2</sup>)/(n\*h<sup>2</sup>)). Despite the differences in weights and expected variances between OLS and BLUP effects, the combined effect of both will mostly cancel out and the specification of the ```--blup``` option will not change the weighted output substantially.
 
 Additional options
 ==================
@@ -140,7 +143,7 @@ This option specfies the location of the output files. If a path is given, the o
 LDSC wrapper
 ===============
 
-Multi trait weighting requires SNP heritability estimates for each trait and rg estimates for each pair of traits. If only summary statistics are available, LD score regression can be used to estimate these parameters. ```ldsc_wrapper.py``` is a wrapper around LD score regression, and in addition it extracts the parameters of interest from the LD score regression output files and saves them in the format used by ```mt_weighting.py```.
+Multi trait weighting requires SNP heritability estimates for each trait and r<sub>G</sub> estimates for each pair of traits. If only summary statistics are available, LD score regression can be used to estimate these parameters. ```ldsc_wrapper.py``` is a wrapper around LD score regression, and in addition it extracts the parameters of interest from the LD score regression output files and saves them in the format used by ```mt_weighting.py```.
 
 If LD score regression has already been run, the ```--extract``` option can be used to only process LD score regression output files.
 
@@ -191,7 +194,7 @@ done
 ```
 
 
-The shrinkage parameter lambda should be M * (1-h2)/h2, where M is the total number of (overlapping) markers and h2 is the SNP heritability of that trait. Here lambda is set to 5000000 for all traits, which would correspond to M = 1000000 and h2 = 0.166 for each trait.
+The shrinkage parameter lambda should be M * (1-h<sup>2</sup>)/h<sup>2</sup>, where M is the total number of (overlapping) markers and h2 is the SNP heritability of that trait. Here lambda is set to 5000000 for all traits, which would correspond to M = 1000000 and h<sup>2</sup> = 0.166 for each trait.
 
 
 Summary statistics input files have to these columns: ```SNP```, ```A1```, ```A2```, ```freq```, ```b```, ```se```, ```p```, ```N```; and should include a header line. For more information see http://cnsgenomics.com/software/gcta/cojo.html.
@@ -205,7 +208,7 @@ Further examples
 ================
 
 
-## Using ldsc wrapper to get h2 and rg
+## Using ldsc wrapper to get h<sup>2</sup> and r<sub>G</sub>
 
 GCTA and ldsc require slightly different notation in the header line:
 
@@ -243,9 +246,9 @@ ldsc_rgs.txt
 ldsc_h2s.txt
 ```
 
-## Using ldsc wrapper to extract h2 and rg 
+## Using ldsc wrapper to extract h<sup>2</sup> and r<sub>G</sub>
 
-If LDSC output files already exist, the following can be used to extract h2 and rg
+If LDSC output files already exist, the following can be used to extract h<sup>2</sup> and r<sub>G</sub>
 
 ```
 python ldsc_wrapper.py \
@@ -298,8 +301,8 @@ python mt_weighting.py \
   --alltraits
  ```
 
-The order of h2, rg, n has to be in same order as files, which is alphabetical, if a path is provided
-rg order for 3 traits: 1-2, 1-3, 2-3
+The order of h<sup>2</sup>, r<sub>G</sub>, n has to be in same order as files, which is alphabetical, if a path is provided
+r<sub>G</sub> order for 3 traits: 1-2, 1-3, 2-3
 for n traits:
 ```R
 apply(combn(1:n, 2), 2, function(x) paste(x, collapse='-'))
