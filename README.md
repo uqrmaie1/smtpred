@@ -1,5 +1,5 @@
 # SMTpred
-A program to combine SNP effects or individual scores from multiple-traits according to their sample size, SNP-heritability (h<sup>2</sup>) and genetic correlation (r<sub>G</sub>).
+A program to combine SNP effects or individual scores from multiple traits according to their sample size, SNP-heritability (h<sup>2</sup>) and genetic correlation (r<sub>G</sub>).
 
 Table of Contents
 =================
