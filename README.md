@@ -1,4 +1,4 @@
-# MTweighting
+# SMTpred
 A program to combine SNP effects or individual scores from multiple-traits according to their sample size, SNP-heritability (h<sup>2</sup>) and genetic correlation (r<sub>G</sub>).
 
 Table of Contents
@@ -43,7 +43,7 @@ The examples below can be recreted using the files in the data directory. Howeve
 Installation
 ============
 
-Change into your directory of choice and type ```git clone https://github.com/uqrmaie1/mtweighting.git```, or click on the green download button to download the zip file. This will take up around 78 MB. Change into the directory ```mtweighting```. With a bit of luck, the example in the next section should run without problems. If it doesn't, make sure ```python``` refers to version 2.7 and not 3.x, and that all the necessary libraries are installed.
+Change into your directory of choice and type ```git clone https://github.com/uqrmaie1/smtpred.git```, or click on the green download button to download the zip file. This will take up around 78 MB. Change into the directory ```smtpred```. With a bit of luck, the example in the next section should run without problems. If it doesn't, make sure ```python``` refers to version 2.7 and not 3.x, and that all the necessary libraries are installed.
 
 This has been tested under OS X 10.11.6 and under CentOS release 6.8.
 
@@ -54,7 +54,7 @@ Simple example
 Let's say we want to combine traitA, traitB and traitC to create a more accurate predictor for traitA. It is assumed that single-trait predictors for traitA, traitB and traitC already exist, and that N, h<sup>2</sup> and r<sub>G</sub> are known and are 1e5, 0.5 and 0.5, respectively.
 
 ```
-python mt_weighting.py \
+python smtpred.py \
   --h2 0.5 0.5 0.5 \
   --rg 0.5 0.5 0.5 \
   --n 1e5 1e5 1e5 \
@@ -143,11 +143,11 @@ This option specfies the location of the output files. If a path is given, the o
 LDSC wrapper
 ===============
 
-Multi trait weighting requires SNP-heritability estimates for each trait and r<sub>G</sub> estimates for each pair of traits. If only summary statistics are available, LD score regression can be used to estimate these parameters. ```ldsc_wrapper.py``` is a wrapper around LD score regression, and in addition it extracts the parameters of interest from the LD score regression output files and saves them in the format used by ```mt_weighting.py```.
+Multi trait weighting requires SNP-heritability estimates for each trait and r<sub>G</sub> estimates for each pair of traits. If only summary statistics are available, LD score regression can be used to estimate these parameters. ```ldsc_wrapper.py``` is a wrapper around LD score regression, and in addition it extracts the parameters of interest from the LD score regression output files and saves them in the format used by ```smtpred.py```.
 
 If LD score regression has already been run, the ```--extract``` option can be used to only process LD score regression output files.
 
-```ldsc_wrapper.py``` is a helper script to more conveniently obtain the input parameters for ```mt_weighting.py``` and has not been tested extensively.
+```ldsc_wrapper.py``` is a helper script to more conveniently obtain the input parameters for ```smtpred.py``` and has not been tested extensively.
 
 ## Further ```ldsc_wrapper.py``` options
 
@@ -267,7 +267,7 @@ ldsc_h2s.txt
 ## Weighting OLS SNP effects
 
 ```
-python mt_weighting.py \
+python smtpred.py \
   --h2file data/ldsc/ldsc_h2s.txt \
   --rgfile data/ldsc/ldsc_rgs.txt \
   --nfile data/ldsc/ldsc_ns.txt \
@@ -292,7 +292,7 @@ h2s=`awk '{printf $2 " "}' data/ldsc/ldsc_h2s.txt`
 rgs=`awk '{printf $3 " "}' data/ldsc/ldsc_rgs.txt`
 ns=`awk '{printf $2 " "}' data/ldsc/ldsc_ns.txt`
 
-python mt_weighting.py \
+python smtpred.py \
   --h2 $h2s \
   --rg $rgs \
   --n $ns \
@@ -315,7 +315,7 @@ diff data/snp_effects/wMT-OLS/direct_input.beta data/snp_effects/wMT-OLS/multi_t
 
 To get only weights, don't provide any SNP effect or score files:
 ```
-python mt_weighting.py \
+python smtpred.py \
   --h2 0.2 0.5 0.8 0.8 \
   --rg 0.8 0.8 0.8 0.5 0.5 0.5 \
   --n 1e4 1e5 1e5 1e6 \
@@ -334,7 +334,7 @@ weights_only.log
 ## Weighting SBLUP individual scores
 
 ```
-python mt_weighting.py \
+python smtpred.py \
   --h2file data/ldsc/ldsc_h2s.txt \
   --rgfile data/ldsc/ldsc_rgs.txt \
   --nfile data/ldsc/ldsc_ns.txt \
@@ -358,7 +358,7 @@ Not specifying the BLUP option gives different weights and variances, but a very
 If meff is set to larger values than the default of 90000, the results will become indistinguishable. 
 
 ```
-python mt_weighting.py \
+python smtpred.py \
   --h2file data/ldsc/ldsc_h2s.txt \
   --rgfile data/ldsc/ldsc_rgs.txt \
   --nfile data/ldsc/ldsc_ns.txt \
@@ -389,7 +389,7 @@ plink2 --bfile data/testset/test \
 ## Weighting OLS individual score (profile scores) files
 
 ```
-python mt_weighting.py \
+python smtpred.py \
   --h2file data/ldsc/ldsc_h2s.txt \
   --rgfile data/ldsc/ldsc_rgs.txt \
   --nfile data/ldsc/ldsc_ns.txt \
