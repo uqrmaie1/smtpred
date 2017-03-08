@@ -1,5 +1,5 @@
 # SMTpred
-SMTpred is a program to combine SNP effects or individual scores from multiple traits according to their sample size, SNP-heritability (h<sup>2</sup>) and genetic correlation (r<sub>G</sub>).
+SMTpred is a program which combines SNP effects or individual scores from multiple traits according to their sample size, SNP-heritability (h<sup>2</sup>) and genetic correlation (r<sub>G</sub>), in order to create more accurate polygenic risk scores.
 
 Table of Contents
 =================
@@ -45,7 +45,7 @@ Installation
 
 Change into your directory of choice and type ```git clone https://github.com/uqrmaie1/smtpred.git```, or click on the green download button to download the zip file. This will take up around 78 MB. Change into the directory ```smtpred```. With a bit of luck, the example in the next section should run without problems. If it doesn't, make sure ```python``` refers to version 2.7 and not 3.x, and that all the necessary libraries are installed.
 
-For example, if the ```pandas``` library is not installed, you can try to install it via ```pip install pandas```. If the pip package manager is not installed, you could try to install it via ```easy_install pip```.
+For example, if the ```pandas``` library is not installed, you can try to install it via ```pip install pandas```. If the pip package manager is not installed, you could try to install it via ```easy_install pip```. If that doesn't work due to lacking permission, try adding the option ```--user```.
 
 This has been tested under OS X 10.11.6 and under CentOS release 6.8.
 
@@ -76,22 +76,34 @@ Input formats
 
 Weighting is performed on SNP effects, if the option ```--betafiles``` or ```--betapath``` is specified. SNP effect files for each trait all have to be in the same format, and have to have a header line with three required fields: SNP ID (called ```snp```, ```snpid```, ```rs```, ```rsid```; case insensitive), effect allele (called ```a1```; case insensitive) and SNP effect (called ```beta``` or ```b```; case insensitive). SNP IDs will be matched on their ID and effect allele ```a1```, and optionally on ```a2``` if it exists. ```a1``` (and ```a2```) have to match exactly among traits, otherwise the SNP will not be used.
 
+If the trait is a disease trait and has odds ratios, beta values can be calculated as ```log(odds ratio)```.
+
+```--betapath``` assumes that all files in this directory are PLINK score files.
+
+```--betafiles``` should be followed by space-separated file names (```--betafiles trait1.txt trait2.txt```).
+
 ## Score files
 
-Weighting is performed on individual scores, if the option ```--scorefiles``` or ```--scorepath``` is specified. Score files have to be in the format of the output of ```PLINK --score``` (```.profile``` files) ```--scorepath``` assumes that all files in this directory are PLINK score files.
+Weighting is performed on individual scores, if the option ```--scorefiles``` or ```--scorepath``` is specified. Score files have to be in the format of the output of ```PLINK --score``` (```.profile``` files).
 
+```--scorepath``` assumes that all files in this directory are PLINK score files.
+
+```--scorefiles``` should be followed by space-separated file names (```--scorefiles trait1.profile trait2.profile```).
 
 ## Sample size file
 
-File that contains sample size of each trait (option ```--nfile```). This file has no header and two columns: Trait and sample size. Alternatively sample size input can be provided directly using the option ```--n```.
+A file that contains sample size of each trait (option ```--nfile```). This file has no header and two columns: Trait and sample size. Alternatively sample size input can be provided directly using the option ```--n```.
+
 
 ## h<sup>2</sup> file
 
-File that contains SNP-heritability estimates of each trait (option ```--h2file```). This file has no header and two columns: Trait and SNP-heritability. Alternatively SNP-heritability input can be provided directly using the option ```--h2```.
+A file that contains SNP-heritability estimates of each trait (option ```--h2file```). This file has no header and two columns: Trait and SNP-heritability. Alternatively SNP-heritability input can be provided directly using the option ```--h2``` (See examples below).
+
+For disease traits, use heritability estimates on the observed scale. Don't convert them to the liability scale.
 
 ## r<sub>G</sub> file
 
-File that contains genetic correlation (r<sub>G</sub>) estimates of each trait (option ```--rgfile```). This file has no header and three columns: Trait 1, Trait 2 and SNP-heritability. Alternatively genetic correlation input can be provided directly using the option ```--rg```.
+A file that contains genetic correlation (r<sub>G</sub>) estimates of each trait (option ```--rgfile```). This file has no header and three columns: Trait 1, Trait 2 and r<sub>G</sub>. Alternatively genetic correlation input can be provided directly using the option ```--rg```.
 
 
 Output formats
