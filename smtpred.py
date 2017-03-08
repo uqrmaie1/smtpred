@@ -27,7 +27,7 @@ logger.handlers = [ch]
 
 logger.info('-------------------------------------------------------------------\n' + \
             ' Multi-trait weighting                            February 2017    \n' + \
-            ' Robert Maier, Peter Visscher, Matt Robinson                       \n' + \
+            ' Robert Maier, Peter Visscher, Naomi Wray, Matt Robinson           \n' + \
             ' Contact: r.maier@uq.edu.au                                        \n' + \
             '-------------------------------------------------------------------\n')
 
