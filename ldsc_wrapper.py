@@ -5,6 +5,7 @@
 # 31/01/2017
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+from __future__ import print_function
 import subprocess
 import argparse
 import logging
@@ -35,23 +36,20 @@ def parse_arguments():
     
     parser.add_argument('--out', type=str, required=False, default='./', help='output path')
 
-    group = parser.add_mutually_exclusive_group(required=False)
-    
-    group_run = group.add_argument_group()
-    group_run.add_argument('--n', nargs='+', type=float, required=False, help='sample size for each trait, if not in sumstats files')
-    group_run.add_argument('--usealln', action='store_true', help='flag to that all SNPs should be used to infer N for each trait (not just the first 100)')
-    group_run.add_argument('--files', nargs='+', type=str, required=False, help='file names of summary statistics for which to calculate h2 and rg')
-    group_run.add_argument('--ldscpath', type=str, required=False, help='path of the ldsc program (munge_sumstats.py and ldsc.py)')
-    group_run.add_argument('--snplist', type=str, required=False, help='path of the ldsc snplist file')
-    group_run.add_argument('--ref_ld', type=str, required=False, help='path of the ldsc ref_ld files')
-    group_run.add_argument('--w_ld', type=str, required=False, help='path of the ldsc w_ld files')
+    parser.add_argument('--n', nargs='+', type=float, required=False, help='sample size for each trait, if not in sumstats files')
+    parser.add_argument('--usealln', action='store_true', help='flag to that all SNPs should be used to infer N for each trait (not just the first 100)')
+    parser.add_argument('--files', nargs='+', type=str, required=False, help='file names of summary statistics for which to calculate h2 and rg')
+    parser.add_argument('--snplist', type=str, required=False, help='path of the ldsc snplist file')
+    parser.add_argument('--ref_ld', type=str, required=False, help='path of the ldsc ref_ld files')
+    parser.add_argument('--w_ld', type=str, required=False, help='path of the ldsc w_ld files')
 
-    group_extract = group.add_argument_group()
-    group_run.add_argument('--extract', type=str, help='Path of log files of ldsc output. With this option ldsc is not run, but the h2 and rg estimates are extracted from already existing ldsc log files.')
+    group_extract = parser.add_mutually_exclusive_group(required=True)
+    group_extract.add_argument('--extract', type=str, help='Path of log files of ldsc output. With this option ldsc is not run, but the h2 and rg estimates are extracted from already existing ldsc log files.')
+    group_extract.add_argument('--ldscpath', type=str, help='path of the ldsc program (munge_sumstats.py and ldsc.py)')
 
     try:
         args = parser.parse_args()
-    except IOError, msg:
+    except IOError as msg:
         parser.error(str(msg))
 
     fh = logging.FileHandler(args.out + '/ldsc_wrapper.log')
@@ -77,7 +75,7 @@ def get_n(args):
         if args.n and len(args.n) == len(args.files): # get n from command line input
             n[nam] = args.n[i]
         else: # get n from sumstats files
-            print f
+            print(f)
             newdat = pandas.read_csv(f, sep='\s+', nrows=nrows)
             if not 'N' in list(newdat):
                 raise ValueError('No sample sizes provided and file ' + f + ' is missing column "N"!')

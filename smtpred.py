@@ -1,3 +1,5 @@
+#!/usr/bin/env python2
+
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # This script combines a number of single-trait SNP effects (or individual predictors) into a series of multi-trait SNP effects (or summary statistics)
 #
@@ -5,6 +7,7 @@
 # 30/01/2017
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+from __future__ import print_function
 import re
 import sys
 import code
@@ -79,7 +82,7 @@ def parse_arguments():
 
     try:
         args = parser.parse_args()
-    except IOError, msg:
+    except IOError as msg:
         parser.error(str(msg))
 
     args.out = args.out + ('multi_trait' if args.out.endswith('/') else '')
@@ -236,7 +239,7 @@ def read_files(files, args):
             Values.ids = set(id0)
             idlists = [id0]
             for i, newdat in enumerate(st_data[1:]):
-                print '\rmerging file ' + str(i+2) + ' of ' + str(len(st_data)) + '...',
+                print('\rmerging file ' + str(i+2) + ' of ' + str(len(st_data)) + '...')
                 sys.stdout.flush()
 
                 idlists.append([str(a) + ' ' + str(b) for a, b in zip(newdat.ix[:,0], newdat.ix[:,1])])
@@ -303,7 +306,7 @@ def read_files(files, args):
             idlists = [id0]
 
             for i, newdat in enumerate(st_data[1:]):
-                print '\rmerging file ' + str(i+2) + ' of ' + str(len(st_data)) + '...',
+                print('\rmerging file ' + str(i+2) + ' of ' + str(len(st_data)) + '...')
                 sys.stdout.flush()
 
                 idlists.append([str(snp) + ' ' + str(a1) + ' ' + str(a2) for snp, a1, a2 in zip(newdat.ix[:,Values.snpindex], newdat.ix[:,a1index], newdat.ix[:,a2index])])
