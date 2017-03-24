@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # This script is a simple wrapper around LDSC to simplify the application of multi-trait weighting, which requires h2 and rG estimates
 #

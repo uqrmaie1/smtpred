@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # This script combines a number of single-trait SNP effects (or individual predictors) into a series of multi-trait SNP effects (or summary statistics)
@@ -66,8 +66,8 @@ def parse_arguments():
     group.add_argument('--rg', nargs='+', type=float, help='genetic correlation estimates for each pair of traits')
     group.add_argument('--rgfile', type=str, help='file with genetic correlation estimates for each pair of traits')
 
-    parser.add_argument('--meff', default='90000', type=float, help='effective number of markers')
-    parser.add_argument('--mtot', default='1e6', type=float, help='total number of markers')
+    parser.add_argument('--meff', default='90000', type=float, help='effective number of markers (default 90000)')
+    parser.add_argument('--mtot', default='1e6', type=float, help='total number of markers (default 1000000)')
     parser.add_argument('--blup', action='store_true', help='flag to indicate that SNP effects (or individual scores) are BLUP effects, not GWAS (OLS) effects')
     parser.add_argument('--alltraits', action='store_true', help='flag to indicate if multi-trait effects should be returned for all traits (otherwise only first trait)')
     parser.add_argument('--skipidcheck', action='store_true', help='flag to indicate that IDs among input file should not be merged. Will increase speed if all input files have same IDs in same order.')
@@ -262,6 +262,7 @@ def read_files(files, args):
     else:
         logger.info('Assuming SNP effects...')
         
+        a1index = a2index = None
         snpnam = ['snp', 'snpid', 'rsid', 'rs']
         for i in range(len(nam)):
             na = nam[i].lower()
@@ -334,34 +335,34 @@ def read_files(files, args):
 # write output
 #-----------------------------------------------------------------
 
-def write_weights(weights, expected_variances, nam, file_prefix):
+def write_weights(weights, expected_variances, nam, args):
     """
     Args: weights: ntraits * ntraits numpy array of weights for each trait
           expected_variances: ntraits vector of variances which each trait should have for the weights to be correct
     """
 
-    with open(file_prefix + '.variances', 'w') as f:
+    with open(args.out + '.variances', 'w') as f:
         for i in range(len(nam)):
             f.write(nam[i] + '\t')
             f.write(str(expected_variances[i]) + '\n')
-    logger.info('Variances written to "' + file_prefix + '.variances''"')
+    logger.info('Variances written to "' + args.out + '.variances''"')
     
-    with open(file_prefix + '.weights', 'w') as f:
+    with open(args.out + '.weights', 'w') as f:
         f.write('\t' + '\t'.join(nam) + '\n')
-        for i in range(len(nam)):
+        for i in range(len(nam)) if args.alltraits else range(1):
             f.write(nam[i] + '\t')
             f.write('\t'.join([ str(x) for x in weights[i,:]]) + '\n')
-    logger.info('Weights written to "' + file_prefix + '.weights''"')
+    logger.info('Weights written to "' + args.out + '.weights''"')
     
 
-def write_output(mt_effects, file_prefix, args):
+def write_output(mt_effects, args):
 
     if not args.alltraits:
         Values.ntraits = 1
         mt_effects = mt_effects[:, 0, None]
     if Values.plinkscore:
         ending = '.score'
-        with open(file_prefix + ending, 'w') as f:
+        with open(args.out + ending, 'w') as f:
             f.write('FID\tIID\t')
             for i in range(Values.ntraits):
                 f.write(Values.basenames[i] + '\t')
@@ -370,11 +371,11 @@ def write_output(mt_effects, file_prefix, args):
             for i in range(len(Values.ids)):
                 f.write(Values.ids[i].replace(' ', '\t') + '\t' + '\t'.join( map(str, mt_effects[i,]) ) + '\n')
         
-        logger.info('Multi-trait scores written to "' + file_prefix + ending + '"')
+        logger.info('Multi-trait scores written to "' + args.out + ending + '"')
 
     else:
         ending = '.beta'
-        with open(file_prefix + ending, 'w') as f:
+        with open(args.out + ending, 'w') as f:
             f.write('snpid\tA1\t')
             for i in range(Values.ntraits):
                 f.write(Values.basenames[i] + '\t')
@@ -383,7 +384,7 @@ def write_output(mt_effects, file_prefix, args):
             for i in range(len(Values.ids)):
                 f.write(Values.ids[i].replace(' ', '\t') + '\t' + '\t'.join( map(str, mt_effects[i,]) ) + '\n')
 
-        logger.info('Multi-trait SNP effects written to "' + file_prefix + ending + '"')
+        logger.info('Multi-trait SNP effects written to "' + args.out + ending + '"')
 
 #-----------------------------------------------------------------
 # calculate weights
@@ -604,7 +605,7 @@ def main():
 
     logger.debug(effective_weights(weights[0,:], expected_variances))
 
-    write_weights(weights, expected_variances, Values.basenames, args.out)
+    write_weights(weights, expected_variances, Values.basenames, args)
 
     # if files with beta values or scores are provided, calculate multi-trait beta values or scores
     if args.scorefiles or args.betafiles or args.scorepath or args.betapath:
@@ -616,7 +617,7 @@ def main():
         logger.info('calculate multi-trait ' + ('scores' if args.scorefiles or args.scorepath else 'SNP effects' ) + '...')
         mt_effects = get_mt_effects(st_data, weights, expected_variances)
         #code.interact(local=dict(globals(), **locals()))
-        write_output(mt_effects, args.out, args)
+        write_output(mt_effects, args)
 
 
 if __name__ == "__main__":
