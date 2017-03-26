@@ -13,6 +13,7 @@ Table of Contents
     * [Sample size file](#sample-size-file)
     * [h<sup>2</sup> file](#h2-file)
     * [r<sub>G</sub> file](#rg-file)
+    * [Order of traits](#order-of-traits)
 * [Output formats](#output-formats)
     * [SNP effect file](#snp-effect-file)
     * [Score file](#score-file)
@@ -104,6 +105,11 @@ For disease traits, use heritability estimates on the observed scale. Don't conv
 ## r<sub>G</sub> file
 
 A file that contains genetic correlation (r<sub>G</sub>) estimates of each trait (option ```--rgfile```). This file has no header and three columns: Trait 1, Trait 2 and r<sub>G</sub>. Alternatively genetic correlation input can be provided directly using the option ```--rg```.
+
+## Order of traits
+
+The order of traits is important, because by default (without the ```--alltraits``` option) the program will create a multi-trait predictor for the first trait.
+The order of traits is taken from the score file or beta file, or otherwise from the h<sup>2</sup> file or otherwise from the Sample size file. If none of these files have been provided as input, they will be sorted alphabetically if the score path or beta path option are specified.
 
 
 Output formats
