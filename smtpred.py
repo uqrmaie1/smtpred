@@ -128,7 +128,8 @@ def read_h2(file, nam):
     h2dict = {}
     with open(file, 'r') as f:
         for l in f:
-            h2dict[l.split()[0]] = float(l.split()[1])
+            if not (l.isspace() or l.strip()):
+                h2dict[l.split()[0]] = float(l.split()[1])
 
     if set(h2dict.iterkeys()) != set(nam):
         raise ValueError("h2 file has to have one value for each trait and has to have matching trait names!")
@@ -147,7 +148,8 @@ def read_n(file, nam):
     ndict = {}
     with open(file, 'r') as f:
         for l in f:
-            ndict[l.split()[0]] = float(l.split()[1])
+            if not (l.isspace() or l.strip()):
+                ndict[l.split()[0]] = float(l.split()[1])
     if set(ndict.iterkeys()) != set(nam):
         raise ValueError("N file has to have one value for each trait and has to have matching trait names!")
     n = []
@@ -166,7 +168,8 @@ def read_rg(file, nam):
     rgdict = {}
     with open(file, 'r') as f:
         for l in f:
-            rgdict[(l.split()[0], l.split()[1])] = float(l.split()[2])
+            if not (l.isspace() or l.strip()):
+                rgdict[(l.split()[0], l.split()[1])] = float(l.split()[2])
 
     for k in rgdict.keys():
         rgdict[(k[1], k[0])] = rgdict[k]
@@ -189,7 +192,19 @@ def get_names_from_nfile(file):
     nam = []
     with open(file, 'r') as f:
         for l in f:
-            nam.append(l.split()[0])
+            if not (l.isspace() or l.strip()):
+                nam.append(l.split()[0])
+    return nam
+
+def get_names_from_h2file(file):
+    """
+    reads h2file, returns list of names
+    """
+    nam = []
+    with open(file, 'r') as f:
+        for l in f:
+            if not (l.isspace() or l.strip()):
+                nam.append(l.split()[0])
     return nam
 
 
@@ -576,12 +591,15 @@ def main():
         Values.basenames = map(lambda x: os.path.splitext(os.path.basename(x))[0], args.scorefiles)
     elif args.betafiles != None:
         Values.basenames = map(lambda x: os.path.splitext(os.path.basename(x))[0], args.betafiles)
+    elif args.h2file != None:
+        Values.basenames = get_names_from_h2file(args.h2file)
+    elif args.nfile != None:
+        Values.basenames = get_names_from_nfile(args.nfile)
     elif args.scorepath != None:
         Values.basenames = [re.sub('.profile', '', x) for x in sorted(os.listdir(args.scorepath))]
     elif args.betapath != None:
         Values.basenames = [re.sub('.txt', '', x) for x in sorted(os.listdir(args.betapath))]
-    elif args.nfile != None:
-        Values.basenames = get_names_from_nfile(args.nfile)
+
     else:
         Values.basenames = ['trait_' + str(i) for i in range(len(args.n))]
 
