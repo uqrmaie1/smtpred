@@ -109,7 +109,8 @@ A file that contains genetic correlation (r<sub>G</sub>) estimates of each trait
 ## Order of traits
 
 The order of traits is important, because by default (without the ```--alltraits``` option) the program will create a multi-trait predictor for the first trait.
-The order of traits is taken from the score file or beta file, or otherwise from the h<sup>2</sup> file or otherwise from the Sample size file. If none of these files have been provided as input, they will be sorted alphabetically if the score path or beta path option are specified.
+
+The order of traits is taken from the order in which the score files or beta files are listed, or, if these options are not specified, from the h<sup>2</sup> file or otherwise from the sample size file. If none of these files have been provided as input, they will be sorted alphabetically if the score path or beta path option are specified.
 
 
 Output formats
