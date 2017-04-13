@@ -187,7 +187,7 @@ By default, only the median of the first 100 lines is used to determine the samp
 Converting OLS effects to SBLUP effects
 =======================================
 
-Multi-trait weighting can be applied to both OLS (GWAS) effects, as well as BLUP effects, which often result in higher prediction accuracy. Typically BLUP effects require individual level genotype data, but ```GCTA --cojo-sblub``` allows to transform OLS effects into BLUP-like (SBLUP) effects, requiring only summary statistics and an LD reference panel.
+Multi-trait weighting can be applied to both OLS (GWAS) effects, as well as BLUP effects, which often result in higher prediction accuracy. Typically BLUP effects require individual level genotype data, but ```GCTA --cojo-sblup``` allows to transform OLS effects into BLUP-like (SBLUP) effects, requiring only summary statistics and an LD reference panel.
 
 Converting OLS effects to SBLUP effects increases prediction accuracy because it results in conditional SNP effects rather than marginal SNP effects. It is therefore important that the set of SNPs is reduced to the set of SNPs used in the prediction set, before running this analysis:
 
