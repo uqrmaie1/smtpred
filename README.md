@@ -109,7 +109,8 @@ A file that contains genetic correlation (r<sub>G</sub>) estimates of each trait
 ## Order of traits
 
 The order of traits is important, because by default (without the ```--alltraits``` option) the program will create a multi-trait predictor for the first trait.
-The order of traits is taken from the score file or beta file, or otherwise from the h<sup>2</sup> file or otherwise from the Sample size file. If none of these files have been provided as input, they will be sorted alphabetically if the score path or beta path option are specified.
+
+The order of traits is taken from the order in which the score files or beta files are listed, or, if these options are not specified, from the h<sup>2</sup> file or otherwise from the sample size file. If none of these files have been provided as input, they will be sorted alphabetically if the score path or beta path option are specified.
 
 
 Output formats
@@ -186,7 +187,7 @@ By default, only the median of the first 100 lines is used to determine the samp
 Converting OLS effects to SBLUP effects
 =======================================
 
-Multi-trait weighting can be applied to both OLS (GWAS) effects, as well as BLUP effects, which often result in higher prediction accuracy. Typically BLUP effects require individual level genotype data, but ```GCTA --cojo-sblub``` allows to transform OLS effects into BLUP-like (SBLUP) effects, requiring only summary statistics and an LD reference panel.
+Multi-trait weighting can be applied to both OLS (GWAS) effects, as well as BLUP effects, which often result in higher prediction accuracy. Typically BLUP effects require individual level genotype data, but ```GCTA --cojo-sblup``` allows to transform OLS effects into BLUP-like (SBLUP) effects, requiring only summary statistics and an LD reference panel.
 
 Converting OLS effects to SBLUP effects increases prediction accuracy because it results in conditional SNP effects rather than marginal SNP effects. It is therefore important that the set of SNPs is reduced to the set of SNPs used in the prediction set, before running this analysis:
 
