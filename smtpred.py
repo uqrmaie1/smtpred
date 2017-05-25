@@ -128,7 +128,7 @@ def read_h2(file, nam):
     h2dict = {}
     with open(file, 'r') as f:
         for l in f:
-            if not (l.isspace() or l.strip()):
+            if not (l.isspace()):
                 h2dict[l.split()[0]] = float(l.split()[1])
 
     if set(h2dict.iterkeys()) != set(nam):
@@ -148,7 +148,7 @@ def read_n(file, nam):
     ndict = {}
     with open(file, 'r') as f:
         for l in f:
-            if not (l.isspace() or l.strip()):
+            if not (l.isspace()):
                 ndict[l.split()[0]] = float(l.split()[1])
     if set(ndict.iterkeys()) != set(nam):
         raise ValueError("N file has to have one value for each trait and has to have matching trait names!")
@@ -168,11 +168,16 @@ def read_rg(file, nam):
     rgdict = {}
     with open(file, 'r') as f:
         for l in f:
-            if not (l.isspace() or l.strip()):
+            if not (l.isspace()):
                 rgdict[(l.split()[0], l.split()[1])] = float(l.split()[2])
 
+    # make rgs symmetric
     for k in rgdict.keys():
         rgdict[(k[1], k[0])] = rgdict[k]
+
+    flatten = lambda l: [item for sublist in l for item in sublist]
+    if set(flatten([[x[0], x[1]] for x in rgdict.iterkeys()])) != set(nam):
+        raise ValueError("rg file trait names do not match to names extracted from file names!")
 
     rg = []
     for i, n1 in enumerate(nam):
@@ -192,7 +197,7 @@ def get_names_from_nfile(file):
     nam = []
     with open(file, 'r') as f:
         for l in f:
-            if not (l.isspace() or l.strip()):
+            if not (l.isspace()):
                 nam.append(l.split()[0])
     return nam
 
@@ -203,7 +208,7 @@ def get_names_from_h2file(file):
     nam = []
     with open(file, 'r') as f:
         for l in f:
-            if not (l.isspace() or l.strip()):
+            if not (l.isspace()):
                 nam.append(l.split()[0])
     return nam
 
@@ -333,15 +338,17 @@ def read_files(files, args):
             logger.info(str(len(Values.ids)) + ' unique and matching SNPs found.')
 
             # Subset to set of SNPs which occur in all sumstats files and have matching allels (no flipping performed)
+            id0intersect = [i for i in id0 if i in Values.ids]
             for i in range(len(st_data)):
-                newids = idlists[i]
-                indices = [j for j, item in enumerate(newids) if item in Values.ids]
-                st_data[i] = st_data[i].ix[indices,:]
+                    newids = idlists[i]
+                    iddict = {k:v for v,k in enumerate(newids)}
+                    indices = [iddict[item] for item in id0intersect]
+                    st_data[i] = st_data[i].ix[indices,:]
+
             # bring in order of first file
-            Values.ids = [x for x in id0 if x in Values.ids]
+            Values.ids = id0intersect
             # A2 not used after here, so it is removed.
             Values.ids = [re.sub(' [a-zA-Z]+$', '', x) for x in Values.ids]
-
             
     return st_data
 
@@ -467,6 +474,7 @@ def ols_weights(n, h2, rg, mtot=1e6):
     """
     ntraits = len(n)
     gcovmat = get_gcovmat(h2, rg)
+    print(gcovmat)
     V = gcovmat / mtot
     numpy.fill_diagonal(V, ols_variances(n, h2, mtot))
     C = gcovmat / mtot
@@ -477,7 +485,7 @@ def ols_weights(n, h2, rg, mtot=1e6):
         Vi = V[numpy.array(numpy.where(nonzero)[0])[:, None], nonzero]
         Vinv = numpy.linalg.inv(Vi)
         weights[i, nonzero] = numpy.dot(Vinv, C[i, nonzero])
-
+    print(weights)
     return weights
 
 def blup_weights(n, h2, rg, meff):
@@ -602,8 +610,9 @@ def main():
 
     else:
         Values.basenames = ['trait_' + str(i) for i in range(len(args.n))]
-
     
+    logger.info('trait names are: ' + str(Values.basenames))
+
     # get parameters
     h2s = args.h2 or read_h2(args.h2file, Values.basenames)
     ns  = args.n  or read_n(args.nfile, Values.basenames)
@@ -631,7 +640,7 @@ def main():
         path = args.scorepath or args.betapath
         files = args.scorefiles or args.betafiles or [path + '/' + x for x in sorted(os.listdir(path))]
         st_data = read_files(files, args)
-
+        
         logger.info('calculate multi-trait ' + ('scores' if args.scorefiles or args.scorepath else 'SNP effects' ) + '...')
         mt_effects = get_mt_effects(st_data, weights, expected_variances)
         #code.interact(local=dict(globals(), **locals()))
